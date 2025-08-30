@@ -55,7 +55,7 @@
         
         <!-- Second Column - UTable -->
         <div>
-          <UTable :data="tableData" :columns="tableColumns" />
+          <UTable :data="demoTableStore.unassignedTasks" :columns="tableColumns" />
         </div>
       </div>
       
@@ -65,7 +65,7 @@
           <h3 class="text-xl font-semibold text-gray-900">Assigned Tasks</h3>
           <p class="text-gray-600">Tasks that have been assigned to team members</p>
         </div>
-        <UTable :data="assignedTasks" :columns="assignedTaskColumns" />
+        <UTable :data="demoTableStore.assignedTasks" :columns="assignedTaskColumns" />
       </div>
     </div>
 
@@ -95,13 +95,9 @@
 
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
-type TaskData = {
-  id: string
-  task: string
-  status: 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track'
-  priority: 'High' | 'Medium' | 'Low'
-  assignee: string | null
-}
+import type { TaskData } from '~/stores/demoTable'
+
+const demoTableStore = useDemoTableStore()
 
 const formState = reactive({
   category: '',
@@ -122,43 +118,10 @@ const availableAssignees = [
   'Chris Park'
 ]
 
-const tableData = ref<TaskData[]>([
-  {
-    id: '1',
-    task: 'Site Survey Complete',
-    status: 'Completed',
-    priority: 'High',
-    assignee: null
-  },
-  {
-    id: '2',
-    task: 'Equipment Installation',
-    status: 'In Progress',
-    priority: 'High',
-    assignee: null
-  },
-  {
-    id: '3',
-    task: 'Compliance Review',
-    status: 'Pending',
-    priority: 'Medium',
-    assignee: null
-  },
-  {
-    id: '4',
-    task: 'Network Testing',
-    status: 'Scheduled',
-    priority: 'High',
-    assignee: null
-  },
-  {
-    id: '5',
-    task: 'Project Milestone',
-    status: 'On Track',
-    priority: 'Low',
-    assignee: null
-  }
-])
+// Initialize store data on mount
+onMounted(() => {
+  demoTableStore.loadFromLocalStorage()
+})
 
 const tableColumns = [
   {
@@ -176,15 +139,16 @@ const tableColumns = [
   {
     key: 'assignee',
     header: 'Assignee',
-    cell: ({ row }: { row: any }) => {
-      if (!row.assignee) {
+    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
+      const task = row.original || row
+      if (!task.assignee) {
         return h(resolveComponent('UButton'), {
           variant: 'outline',
           size: 'xs',
-          onClick: () => openAssignModal(row)
+          onClick: () => openAssignModal(task)
         }, () => 'Assign')
       }
-      return row.assignee
+      return task.assignee
     }
   }
 ]
@@ -205,27 +169,24 @@ const assignedTaskColumns = [
   {
     accessorKey: 'assignee',
     header: 'Assignee'
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status',
+    cell: () => 'draft'
   }
 ]
-
-const assignedTasks = computed(() => 
-  tableData.value.filter(task => task.assignee !== null)
-)
 
 const createTask = () => {
   if (!formState.category.trim() || !formState.description.trim()) {
     return
   }
 
-  const newTask: TaskData = {
-    id: (tableData.value.length + 1).toString(),
+  demoTableStore.addTask({
     task: `${formState.category}: ${formState.description}`,
     status: 'Pending',
-    priority: 'Medium',
-    assignee: null
-  }
-
-  tableData.value.push(newTask)
+    priority: 'Medium'
+  })
 
   // Reset form
   formState.category = ''
@@ -234,55 +195,24 @@ const createTask = () => {
   formState.note = ''
 }
 
-const openAssignModal = (task: any) => {
+const openAssignModal = (task: TaskData) => {
   console.log('Opening assign modal for task:', task)
-  // Extract the original task data from the UTable row object
-  const actualTask = task.original || task
-  console.log('Actual task data:', actualTask)
-  selectedTaskForAssignment.value = actualTask
+  selectedTaskForAssignment.value = task
   isAssignModalOpen.value = true
   console.log('Modal opened, selectedTaskForAssignment:', selectedTaskForAssignment.value)
 }
 
 const assignTask = (assigneeName: string) => {
-  console.log('assignTask called with:', assigneeName)
-  console.log('selectedTaskForAssignment:', selectedTaskForAssignment.value)
-  console.log('All task IDs in tableData:', tableData.value.map(t => ({ id: t.id, task: t.task })))
-  
   if (selectedTaskForAssignment.value) {
-    // Find and update the task in the main table data - try multiple approaches
-    let taskIndex = tableData.value.findIndex(task => task.id === selectedTaskForAssignment.value!.id)
-    console.log('Found task index by ID:', taskIndex)
-    
-    // If not found by ID, try by task name
-    if (taskIndex === -1) {
-      taskIndex = tableData.value.findIndex(task => task.task === selectedTaskForAssignment.value!.task)
-      console.log('Found task index by task name:', taskIndex)
-    }
-    
-    // If still not found, try by reference
-    if (taskIndex === -1) {
-      taskIndex = tableData.value.findIndex(task => task === selectedTaskForAssignment.value!)
-      console.log('Found task index by reference:', taskIndex)
-    }
-    
-    if (taskIndex !== -1) {
-      console.log('Before assignment - tableData[' + taskIndex + ']:', tableData.value[taskIndex])
-      // Use direct assignment to ensure reactivity
-      tableData.value[taskIndex].assignee = assigneeName
-      console.log('After assignment - tableData[' + taskIndex + ']:', tableData.value[taskIndex])
-      
-      // Force reactivity by creating a new array reference
-      tableData.value = [...tableData.value]
-      console.log('Updated tableData:', tableData.value)
-      console.log('Assigned tasks (filtered):', tableData.value.filter(task => task.assignee !== null))
+    const result = demoTableStore.assignTask(selectedTaskForAssignment.value.id, assigneeName)
+    if (result) {
+      console.log('Task successfully assigned:', result)
     } else {
       console.error('Could not find task to assign!')
     }
     isAssignModalOpen.value = false
     selectedTaskForAssignment.value = null
-  } else {
-    console.log('No selectedTaskForAssignment found')
   }
 }
+
 </script>
