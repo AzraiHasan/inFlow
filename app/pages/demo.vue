@@ -46,7 +46,7 @@
               <UFileUpload 
                 v-model="formState.attachment"
                 label="Drop your file here"
-                accept="*"
+                accept="image/png, image/jpeg, application/pdf"
                 color="primary"
                 highlight
                 description="PDF, PNG, JPG (max. 2MB)"
@@ -177,13 +177,33 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 import type { TaskData } from '~/stores/demoTable'
+import { DocumentCategory } from '~/types'
 
 const demoTableStore = useDemoTableStore()
+const dataService = useDataService()
+
+// Initialize data service
+onMounted(() => {
+  dataService.initializeData()
+  console.log('DEBUG: Data service initialized')
+  console.log('DEBUG: Current documents on mount:', dataService.documents.value)
+  console.log('DEBUG: Current persona:', dataService.currentPersona.value)
+})
+
+// Utility function to convert File to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
 
 const formState = reactive({
   category: undefined as string | undefined,
   description: '',
-  attachment: null,
+  attachment: null as File | null,
   note: ''
 })
 
@@ -264,6 +284,48 @@ const tableColumns = [
     header: 'Priority'
   },
   {
+    key: 'attachments',
+    header: 'Files',
+    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
+      const task = row.original || row
+      console.log('DEBUG: Rendering files for task:', {
+        taskId: task.id,
+        allDocuments: dataService.documents.value.length,
+        searchingFor: `demo-task-${task.id}`
+      })
+      
+      const documents = dataService.documents.value.filter(doc => {
+        console.log('DEBUG: Checking document:', {
+          docId: doc.id,
+          description: doc.description,
+          matches: doc.description?.includes(`demo-task-${task.id}`)
+        })
+        return doc.description?.includes(`demo-task-${task.id}`)
+      })
+      
+      console.log('DEBUG: Found documents for task', task.id, ':', documents)
+      
+      if (documents.length === 0) {
+        return h('span', { class: 'text-gray-400 text-sm' }, 'No files')
+      }
+      
+      return h('div', { class: 'space-y-1' }, documents.map(doc => 
+        h('div', { class: 'flex items-center space-x-2' }, [
+          h(resolveComponent('UIcon'), { 
+            name: doc.type.includes('image') ? 'i-heroicons-photo' : 'i-heroicons-document-text',
+            class: 'w-4 h-4 text-gray-500'
+          }),
+          h('a', {
+            href: doc.url,
+            download: doc.name,
+            class: 'text-xs text-blue-600 hover:underline truncate max-w-[100px]',
+            title: doc.name
+          }, doc.name)
+        ])
+      ))
+    }
+  },
+  {
     key: 'assignee',
     header: 'Assignee',
     cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
@@ -331,7 +393,7 @@ const assignedTaskColumns = [
   }
 ] as any
 
-const createTask = () => {
+const createTask = async () => {
   console.log('Create button clicked')
   console.log('Form state before validation:', formState)
   
@@ -342,6 +404,7 @@ const createTask = () => {
     return
   }
 
+  // Create task for demo table
   const newTask = {
     task: `${formState.category}: ${formState.description}`,
     status: 'Pending' as const,
@@ -349,8 +412,51 @@ const createTask = () => {
   }
   
   console.log('Creating task:', newTask)
-  demoTableStore.addTask(newTask)
+  const createdTask = demoTableStore.addTask(newTask)
   console.log('Task added to store')
+
+  // Process file attachment if present
+  console.log('DEBUG: Checking for attachment, formState.attachment:', formState.attachment)
+  if (formState.attachment) {
+    try {
+      const file = formState.attachment
+      console.log('DEBUG: Processing attachment:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        taskId: createdTask.id
+      })
+      
+      // Convert file to base64
+      const base64Data = await fileToBase64(file)
+      console.log('DEBUG: Base64 conversion complete, data length:', base64Data.length)
+      
+      // Create document record
+      const documentData = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        category: DocumentCategory.OTHER,
+        description: `Attachment for demo-task-${createdTask.id}`,
+        uploadedBy: dataService.currentPersona.value?.id || 'demo-user',
+        version: 1,
+        url: base64Data, // Store base64 data URL
+        versions: []
+      }
+      
+      console.log('DEBUG: About to add document with data:', documentData)
+      
+      // Add document to data service (this will persist to localStorage)
+      const addedDoc = dataService.addDocument(`demo-task-${createdTask.id}`, documentData)
+      console.log('DEBUG: File attachment stored successfully:', addedDoc)
+      console.log('DEBUG: Current documents in store:', dataService.documents.value)
+      
+    } catch (error) {
+      console.error('ERROR: Processing file attachment failed:', error)
+    }
+  } else {
+    console.log('DEBUG: No attachment found in formState')
+  }
 
   // Reset form
   console.log('Resetting form')
