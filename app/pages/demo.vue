@@ -8,9 +8,9 @@
         <p class="text-gray-600">Experience the platform from different persona perspectives</p>
       </div>
       
-      <div class="grid grid-cols-2 gap-6">
+      <div class="grid grid-cols-3 gap-6">
         <!-- First Column - UForm -->
-        <div>
+        <div class="col-span-1">
           <UForm :state="formState">
             <div class="space-y-4">
               <h3 class="text-base font-semibold leading-6 text-gray-900 mb-4">
@@ -18,19 +18,29 @@
               </h3>
               
               <div class="flex gap-4">
-                <UInput 
-                  v-model="formState.category"
-                  label="Category"
-                  placeholder="Enter task category"
-                  class="flex-1"
-                />
+                <div class="flex-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                  <UDropdownMenu 
+                    :items="categoryDropdownItems"
+                    :ui="{ content: 'w-full' }"
+                  >
+                    <UButton 
+                      variant="outline" 
+                      :label="formState.category || 'Select category'"
+                      trailing-icon="i-heroicons-chevron-down-20-solid"
+                      class="w-full justify-between"
+                    />
+                  </UDropdownMenu>
+                </div>
                 
-                <UInput 
-                  v-model="formState.description"
-                  label="Description"
-                  placeholder="Enter task description"
-                  class="flex-1"
-                />
+                <div class="flex-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <UInput 
+                    v-model="formState.description"
+                    placeholder="Enter task description"
+                    class="w-full"
+                  />
+                </div>
               </div>
               
               <UFileUpload 
@@ -53,8 +63,8 @@
           </UForm>
         </div>
         
-        <!-- Second Column - UTable -->
-        <div>
+        <!-- Second Column - UTable (2/3 width) -->
+        <div class="col-span-2">
           <UTable :data="demoTableStore.unassignedTasks" :columns="tableColumns" />
         </div>
       </div>
@@ -101,19 +111,21 @@
         <UForm :state="editFormState">
           <div class="space-y-4">
             <div class="flex gap-4">
-              <UInput 
-                v-model="editFormState.category"
-                label="Category"
-                placeholder="Enter task category"
-                class="flex-1"
-              />
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <UInput 
+                  v-model="editFormState.category"
+                  placeholder="Enter task category"
+                />
+              </div>
               
-              <UInput 
-                v-model="editFormState.description"
-                label="Description"
-                placeholder="Enter task description"
-                class="flex-1"
-              />
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <UInput 
+                  v-model="editFormState.description"
+                  placeholder="Enter task description"
+                />
+              </div>
             </div>
             
             <div class="flex gap-4">
@@ -206,6 +218,15 @@ const priorityOptions = [
   'High'
 ]
 
+const categoryOptions = [
+  'LCN',
+  'SAR', 
+  'TP',
+  'LOO',
+  'TA',
+  'Other'
+]
+
 const statusDropdownItems = computed(() => [
   statusOptions.map(status => ({
     label: status,
@@ -224,6 +245,15 @@ const priorityDropdownItems = computed(() => [
   }))
 ])
 
+const categoryDropdownItems = computed(() => [
+  categoryOptions.map(category => ({
+    label: category,
+    click: () => {
+      formState.category = category
+    }
+  }))
+])
+
 // Initialize store data on mount
 onMounted(() => {
   demoTableStore.loadFromLocalStorage()
@@ -231,8 +261,20 @@ onMounted(() => {
 
 const tableColumns = [
   {
-    accessorKey: 'task',
-    header: 'Task'
+    key: 'category',
+    header: 'Category',
+    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
+      const task = row.original || row
+      return task.task.split(': ')[0] || ''
+    }
+  },
+  {
+    key: 'description',
+    header: 'Description', 
+    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
+      const task = row.original || row
+      return task.task.split(': ')[1] || task.task
+    }
   },
   {
     accessorKey: 'status',
@@ -276,8 +318,20 @@ const tableColumns = [
 
 const assignedTaskColumns = [
   {
-    accessorKey: 'task',
-    header: 'Task'
+    key: 'category',
+    header: 'Category',
+    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
+      const task = row.original || row
+      return task.task.split(': ')[0] || ''
+    }
+  },
+  {
+    key: 'description',
+    header: 'Description',
+    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
+      const task = row.original || row
+      return task.task.split(': ')[1] || task.task
+    }
   },
   {
     accessorKey: 'status',
