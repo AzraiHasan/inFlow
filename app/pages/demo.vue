@@ -364,21 +364,33 @@ const assignedTaskColumns = [
 ]
 
 const createTask = () => {
+  console.log('Create button clicked')
+  console.log('Form state before validation:', formState)
+  
   if (!formState.category.trim() || !formState.description.trim()) {
+    console.log('Validation failed - category or description is empty')
+    console.log('Category:', formState.category)
+    console.log('Description:', formState.description)
     return
   }
 
-  demoTableStore.addTask({
+  const newTask = {
     task: `${formState.category}: ${formState.description}`,
     status: 'Pending',
     priority: 'Medium'
-  })
+  }
+  
+  console.log('Creating task:', newTask)
+  demoTableStore.addTask(newTask)
+  console.log('Task added to store')
 
   // Reset form
+  console.log('Resetting form')
   formState.category = ''
   formState.description = ''
   formState.attachment = null
   formState.note = ''
+  console.log('Form reset complete')
 }
 
 const openAssignModal = (task: TaskData) => {
