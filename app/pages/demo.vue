@@ -58,6 +58,15 @@
           <UTable :data="tableData" :columns="tableColumns" />
         </div>
       </div>
+      
+      <!-- Assigned Tasks Section -->
+      <div class="mt-8">
+        <div class="mb-4">
+          <h3 class="text-xl font-semibold text-gray-900">Assigned Tasks</h3>
+          <p class="text-gray-600">Tasks that have been assigned to team members</p>
+        </div>
+        <UTable :data="assignedTasks" :columns="assignedTaskColumns" />
+      </div>
     </div>
 
     <!-- Assign Modal -->
@@ -119,14 +128,14 @@ const tableData = ref<TaskData[]>([
     task: 'Site Survey Complete',
     status: 'Completed',
     priority: 'High',
-    assignee: 'Sarah Chen'
+    assignee: null
   },
   {
     id: '2',
     task: 'Equipment Installation',
     status: 'In Progress',
     priority: 'High',
-    assignee: 'Marcus Rodriguez'
+    assignee: null
   },
   {
     id: '3',
@@ -147,7 +156,7 @@ const tableData = ref<TaskData[]>([
     task: 'Project Milestone',
     status: 'On Track',
     priority: 'Low',
-    assignee: 'Marcus Rodriguez'
+    assignee: null
   }
 ])
 
@@ -180,6 +189,29 @@ const tableColumns = [
   }
 ]
 
+const assignedTaskColumns = [
+  {
+    accessorKey: 'task',
+    header: 'Task'
+  },
+  {
+    accessorKey: 'status',
+    header: 'Status'
+  },
+  {
+    accessorKey: 'priority',
+    header: 'Priority'
+  },
+  {
+    accessorKey: 'assignee',
+    header: 'Assignee'
+  }
+]
+
+const assignedTasks = computed(() => 
+  tableData.value.filter(task => task.assignee !== null)
+)
+
 const createTask = () => {
   if (!formState.category.trim() || !formState.description.trim()) {
     return
@@ -202,16 +234,55 @@ const createTask = () => {
   formState.note = ''
 }
 
-const openAssignModal = (task: TaskData) => {
-  selectedTaskForAssignment.value = task
+const openAssignModal = (task: any) => {
+  console.log('Opening assign modal for task:', task)
+  // Extract the original task data from the UTable row object
+  const actualTask = task.original || task
+  console.log('Actual task data:', actualTask)
+  selectedTaskForAssignment.value = actualTask
   isAssignModalOpen.value = true
+  console.log('Modal opened, selectedTaskForAssignment:', selectedTaskForAssignment.value)
 }
 
 const assignTask = (assigneeName: string) => {
+  console.log('assignTask called with:', assigneeName)
+  console.log('selectedTaskForAssignment:', selectedTaskForAssignment.value)
+  console.log('All task IDs in tableData:', tableData.value.map(t => ({ id: t.id, task: t.task })))
+  
   if (selectedTaskForAssignment.value) {
-    selectedTaskForAssignment.value.assignee = assigneeName
+    // Find and update the task in the main table data - try multiple approaches
+    let taskIndex = tableData.value.findIndex(task => task.id === selectedTaskForAssignment.value!.id)
+    console.log('Found task index by ID:', taskIndex)
+    
+    // If not found by ID, try by task name
+    if (taskIndex === -1) {
+      taskIndex = tableData.value.findIndex(task => task.task === selectedTaskForAssignment.value!.task)
+      console.log('Found task index by task name:', taskIndex)
+    }
+    
+    // If still not found, try by reference
+    if (taskIndex === -1) {
+      taskIndex = tableData.value.findIndex(task => task === selectedTaskForAssignment.value!)
+      console.log('Found task index by reference:', taskIndex)
+    }
+    
+    if (taskIndex !== -1) {
+      console.log('Before assignment - tableData[' + taskIndex + ']:', tableData.value[taskIndex])
+      // Use direct assignment to ensure reactivity
+      tableData.value[taskIndex].assignee = assigneeName
+      console.log('After assignment - tableData[' + taskIndex + ']:', tableData.value[taskIndex])
+      
+      // Force reactivity by creating a new array reference
+      tableData.value = [...tableData.value]
+      console.log('Updated tableData:', tableData.value)
+      console.log('Assigned tasks (filtered):', tableData.value.filter(task => task.assignee !== null))
+    } else {
+      console.error('Could not find task to assign!')
+    }
     isAssignModalOpen.value = false
     selectedTaskForAssignment.value = null
+  } else {
+    console.log('No selectedTaskForAssignment found')
   }
 }
 </script>
