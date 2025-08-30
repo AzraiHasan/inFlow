@@ -20,18 +20,17 @@
               <div class="flex gap-4">
                 <div class="flex-1">
                   <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <UDropdownMenu 
-                    :items="categoryDropdownItems"
-                    :ui="{ content: 'w-full' }"
-                    @click="console.log('UDropdownMenu clicked')"
-                  >
-                    <UButton 
-                      variant="outline" 
-                      :label="formState.category || 'Select category'"
-                      trailing-icon="i-heroicons-chevron-down-20-solid"
-                      class="w-full justify-between"
-                    />
-                  </UDropdownMenu>
+                  <USelect
+                    v-model="formState.category"
+                    :items="categoryOptions"
+                    placeholder="Choose a category..."
+                    variant="outline"
+                    class="w-full"
+                    :ui="{
+                      trailingIcon: 'group-data-[state=open]:rotate-180',
+                      content: 'w-full'
+                    }"
+                  />
                 </div>
                 
                 <div class="flex-1">
@@ -132,37 +131,37 @@
             <div class="flex gap-4">
               <div class="flex-1">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <UDropdownMenu 
-                  :items="statusDropdownItems"
-                  :ui="{ content: 'w-full' }"
-                >
-                  <UButton 
-                    variant="outline" 
-                    :label="editFormState.status || 'Select status'"
-                    trailing-icon="i-heroicons-chevron-down-20-solid"
-                    class="w-full justify-between"
-                  />
-                </UDropdownMenu>
+                <USelect
+                  v-model="editFormState.status"
+                  :items="statusOptions"
+                  placeholder="Select status"
+                  variant="outline"
+                  class="w-full"
+                  :ui="{
+                    trailingIcon: 'group-data-[state=open]:rotate-180',
+                    content: 'w-full'
+                  }"
+                />
               </div>
               
               <div class="flex-1">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                <UDropdownMenu 
-                  :items="priorityDropdownItems"
-                  :ui="{ content: 'w-full' }"
-                >
-                  <UButton 
-                    variant="outline" 
-                    :label="editFormState.priority || 'Select priority'"
-                    trailing-icon="i-heroicons-chevron-down-20-solid"
-                    class="w-full justify-between"
-                  />
-                </UDropdownMenu>
+                <USelect
+                  v-model="editFormState.priority"
+                  :items="priorityOptions"
+                  placeholder="Select priority"
+                  variant="outline"
+                  class="w-full"
+                  :ui="{
+                    trailingIcon: 'group-data-[state=open]:rotate-180',
+                    content: 'w-full'
+                  }"
+                />
               </div>
             </div>
             
             <div class="flex justify-end gap-2 pt-4">
-              <UButton color="gray" @click="isEditModalOpen = false">Cancel</UButton>
+              <UButton color="neutral" @click="isEditModalOpen = false">Cancel</UButton>
               <UButton color="primary" @click="saveTaskEdit">Save</UButton>
             </div>
           </div>
@@ -179,7 +178,7 @@ import type { TaskData } from '~/stores/demoTable'
 const demoTableStore = useDemoTableStore()
 
 const formState = reactive({
-  category: '',
+  category: null as string | null,
   description: '',
   attachment: null,
   note: ''
@@ -192,8 +191,8 @@ const selectedTaskForEdit = ref<TaskData | null>(null)
 const editFormState = reactive({
   category: '',
   description: '',
-  status: '',
-  priority: ''
+  status: null as 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track' | null,
+  priority: null as 'High' | 'Medium' | 'Low' | null
 })
 
 const availableAssignees = [
@@ -205,7 +204,7 @@ const availableAssignees = [
   'Chris Park'
 ]
 
-const statusOptions = [
+const statusOptions: ('Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track')[] = [
   'Pending',
   'In Progress', 
   'Completed',
@@ -213,7 +212,7 @@ const statusOptions = [
   'On Track'
 ]
 
-const priorityOptions = [
+const priorityOptions: ('High' | 'Medium' | 'Low')[] = [
   'Low',
   'Medium',
   'High'
@@ -228,45 +227,11 @@ const categoryOptions = [
   'Other'
 ]
 
-const statusDropdownItems = computed(() => 
-  statusOptions.map(status => ({
-    label: status,
-    onSelect: () => {
-      console.log('Status selected:', status)
-      editFormState.status = status
-      console.log('editFormState.status updated to:', editFormState.status)
-    }
-  }))
-)
 
-const priorityDropdownItems = computed(() => 
-  priorityOptions.map(priority => ({
-    label: priority,
-    onSelect: () => {
-      console.log('Priority selected:', priority)
-      editFormState.priority = priority
-      console.log('editFormState.priority updated to:', editFormState.priority)
-    }
-  }))
-)
-
-const categoryDropdownItems = computed(() => {
-  const items = categoryOptions.map(category => ({
-    label: category,
-    onSelect: () => {
-      console.log('Category selected:', category)
-      formState.category = category
-      console.log('formState.category updated to:', formState.category)
-    }
-  }))
-  console.log('categoryDropdownItems computed:', items)
-  return items
-})
 
 // Initialize store data on mount
 onMounted(() => {
   demoTableStore.loadFromLocalStorage()
-  console.log('categoryDropdownItems:', categoryDropdownItems.value)
   console.log('formState:', formState)
 })
 
@@ -367,7 +332,7 @@ const createTask = () => {
   console.log('Create button clicked')
   console.log('Form state before validation:', formState)
   
-  if (!formState.category.trim() || !formState.description.trim()) {
+  if (!formState.category || !formState.description.trim()) {
     console.log('Validation failed - category or description is empty')
     console.log('Category:', formState.category)
     console.log('Description:', formState.description)
@@ -376,8 +341,8 @@ const createTask = () => {
 
   const newTask = {
     task: `${formState.category}: ${formState.description}`,
-    status: 'Pending',
-    priority: 'Medium'
+    status: 'Pending' as const,
+    priority: 'Medium' as const
   }
   
   console.log('Creating task:', newTask)
@@ -386,7 +351,7 @@ const createTask = () => {
 
   // Reset form
   console.log('Resetting form')
-  formState.category = ''
+  formState.category = null
   formState.description = ''
   formState.attachment = null
   formState.note = ''
@@ -424,12 +389,16 @@ const openEditModal = (task: TaskData) => {
 }
 
 const saveTaskEdit = () => {
-  if (selectedTaskForEdit.value && editFormState.category.trim() && editFormState.description.trim()) {
+  if (selectedTaskForEdit.value && 
+      editFormState.category.trim() && 
+      editFormState.description.trim() &&
+      editFormState.status &&
+      editFormState.priority) {
     const updatedTask = {
       ...selectedTaskForEdit.value,
       task: `${editFormState.category}: ${editFormState.description}`,
-      status: editFormState.status,
-      priority: editFormState.priority
+      status: editFormState.status as 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track',
+      priority: editFormState.priority as 'High' | 'Medium' | 'Low'
     }
     
     demoTableStore.updateTask(selectedTaskForEdit.value.id, updatedTask)
