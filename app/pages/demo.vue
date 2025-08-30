@@ -163,6 +163,13 @@
               </div>
             </div>
             
+            <UTextarea 
+              v-model="editFormState.note"
+              label="Additional note (optional):"
+              placeholder="Enter additional notes..."
+              class="w-full"
+            />
+            
             <div class="flex justify-between pt-4">
               <UButton color="error" variant="outline" @click="showDeleteConfirmation = true">Delete</UButton>
               <div class="flex gap-2">
@@ -241,7 +248,8 @@ const editFormState = reactive({
   category: '',
   description: '',
   status: undefined as 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track' | undefined,
-  priority: undefined as 'High' | 'Medium' | 'Low' | undefined
+  priority: undefined as 'High' | 'Medium' | 'Low' | undefined,
+  note: ''
 })
 
 const availableAssignees = [
@@ -434,7 +442,8 @@ const createTask = async () => {
   const newTask = {
     task: `${formState.category}: ${formState.description}`,
     status: 'Pending' as const,
-    priority: 'Medium' as const
+    priority: 'Medium' as const,
+    note: formState.note
   }
   
   console.log('Creating task:', newTask)
@@ -520,6 +529,7 @@ const openEditModal = (task: TaskData) => {
   editFormState.description = description || task.task
   editFormState.status = task.status
   editFormState.priority = task.priority
+  editFormState.note = task.note || ''
   isEditModalOpen.value = true
 }
 
@@ -533,7 +543,8 @@ const saveTaskEdit = () => {
       ...selectedTaskForEdit.value,
       task: `${editFormState.category}: ${editFormState.description}`,
       status: editFormState.status as 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track',
-      priority: editFormState.priority as 'High' | 'Medium' | 'Low'
+      priority: editFormState.priority as 'High' | 'Medium' | 'Low',
+      note: editFormState.note
     }
     
     demoTableStore.updateTask(selectedTaskForEdit.value.id, updatedTask)

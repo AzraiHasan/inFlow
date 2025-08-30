@@ -6,6 +6,7 @@ export interface TaskData {
   status: 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track'
   priority: 'High' | 'Medium' | 'Low'
   assignee: string | null
+  note?: string
 }
 
 export const useDemoTableStore = defineStore('demoTable', () => {
