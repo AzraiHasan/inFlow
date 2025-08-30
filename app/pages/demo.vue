@@ -9,25 +9,44 @@
       </div>
       
       <div class="grid grid-cols-2 gap-6">
-        <!-- First Column - UCard -->
+        <!-- First Column - UForm -->
         <div>
-          <UCard>
-            <template #header>
-              <h3 class="text-base font-semibold leading-6 text-gray-900">
-                Card Title
+          <UForm>
+            <div class="space-y-4">
+              <h3 class="text-base font-semibold leading-6 text-gray-900 mb-4">
+                New Task
               </h3>
-            </template>
-            
-            <p class="text-gray-600">
-              This is a basic UCard example with header and body content. You can add any content here.
-            </p>
-            
-            <template #footer>
-              <div class="flex justify-end">
-                <UButton color="primary">Action</UButton>
+              
+              <div class="flex gap-4">
+                <UInput 
+                  label="Category"
+                  placeholder="Enter task category"
+                  class="flex-1"
+                />
+                
+                <UInput 
+                  label="Description"
+                  placeholder="Enter task description"
+                  class="flex-1"
+                />
               </div>
-            </template>
-          </UCard>
+              
+              <UFileUpload 
+                label="Attachment"
+                accept="*"
+              />
+              
+              <UTextarea 
+                label="Additional note (optional):"
+                placeholder="Enter additional notes..."
+                class="w-full"
+              />
+              
+              <div class="flex justify-end pt-4">
+                <UButton color="primary">Create</UButton>
+              </div>
+            </div>
+          </UForm>
         </div>
         
         <!-- Second Column - UTable -->
