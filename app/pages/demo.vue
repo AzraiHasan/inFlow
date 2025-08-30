@@ -23,6 +23,7 @@
                   <UDropdownMenu 
                     :items="categoryDropdownItems"
                     :ui="{ content: 'w-full' }"
+                    @click="console.log('UDropdownMenu clicked')"
                   >
                     <UButton 
                       variant="outline" 
@@ -227,36 +228,46 @@ const categoryOptions = [
   'Other'
 ]
 
-const statusDropdownItems = computed(() => [
+const statusDropdownItems = computed(() => 
   statusOptions.map(status => ({
     label: status,
-    click: () => {
+    onSelect: () => {
+      console.log('Status selected:', status)
       editFormState.status = status
+      console.log('editFormState.status updated to:', editFormState.status)
     }
   }))
-])
+)
 
-const priorityDropdownItems = computed(() => [
+const priorityDropdownItems = computed(() => 
   priorityOptions.map(priority => ({
     label: priority,
-    click: () => {
+    onSelect: () => {
+      console.log('Priority selected:', priority)
       editFormState.priority = priority
+      console.log('editFormState.priority updated to:', editFormState.priority)
     }
   }))
-])
+)
 
-const categoryDropdownItems = computed(() => [
-  categoryOptions.map(category => ({
+const categoryDropdownItems = computed(() => {
+  const items = categoryOptions.map(category => ({
     label: category,
-    click: () => {
+    onSelect: () => {
+      console.log('Category selected:', category)
       formState.category = category
+      console.log('formState.category updated to:', formState.category)
     }
   }))
-])
+  console.log('categoryDropdownItems computed:', items)
+  return items
+})
 
 // Initialize store data on mount
 onMounted(() => {
   demoTableStore.loadFromLocalStorage()
+  console.log('categoryDropdownItems:', categoryDropdownItems.value)
+  console.log('formState:', formState)
 })
 
 const tableColumns = [
