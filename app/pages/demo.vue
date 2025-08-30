@@ -45,8 +45,11 @@
               
               <UFileUpload 
                 v-model="formState.attachment"
-                label="Attachment"
+                label="Drop your file here"
                 accept="*"
+                color="primary"
+                highlight
+                description="PDF, PNG, JPG (max. 2MB)"
               />
               
               <UTextarea 
@@ -178,7 +181,7 @@ import type { TaskData } from '~/stores/demoTable'
 const demoTableStore = useDemoTableStore()
 
 const formState = reactive({
-  category: null as string | null,
+  category: undefined as string | undefined,
   description: '',
   attachment: null,
   note: ''
@@ -191,8 +194,8 @@ const selectedTaskForEdit = ref<TaskData | null>(null)
 const editFormState = reactive({
   category: '',
   description: '',
-  status: null as 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track' | null,
-  priority: null as 'High' | 'Medium' | 'Low' | null
+  status: undefined as 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track' | undefined,
+  priority: undefined as 'High' | 'Medium' | 'Low' | undefined
 })
 
 const availableAssignees = [
@@ -290,7 +293,7 @@ const tableColumns = [
       }))
     }
   }
-]
+] as any
 
 const assignedTaskColumns = [
   {
@@ -326,7 +329,7 @@ const assignedTaskColumns = [
     header: 'Status',
     cell: () => 'draft'
   }
-]
+] as any
 
 const createTask = () => {
   console.log('Create button clicked')
@@ -351,7 +354,7 @@ const createTask = () => {
 
   // Reset form
   console.log('Resetting form')
-  formState.category = null
+  formState.category = undefined
   formState.description = ''
   formState.attachment = null
   formState.note = ''
