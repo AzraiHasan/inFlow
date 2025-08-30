@@ -141,6 +141,21 @@ export const useDataService = () => {
     return newTask
   }
   
+  const deleteTask = (taskId: string) => {
+    const taskIndex = tasks.value.findIndex(task => task.id === taskId)
+    if (taskIndex !== -1) {
+      tasks.value.splice(taskIndex, 1)
+      
+      // Also remove associated documents and comments
+      documents.value = documents.value.filter(doc => !doc.description?.includes(taskId))
+      comments.value = comments.value.filter(comment => comment.taskId !== taskId)
+      
+      saveToLocalStorage()
+      return true
+    }
+    return false
+  }
+  
   // Document Methods
   const getDocuments = () => documents.value
   
@@ -153,6 +168,29 @@ export const useDataService = () => {
     return task?.documents || []
   }
   
+  const addDocument = (taskIdHint: string, document: Omit<Document, 'id' | 'uploadedAt' | 'version' | 'versions'>) => {
+    const docId = `doc-${Date.now()}`
+    const newDocument: Document = {
+      ...document,
+      id: docId,
+      uploadedAt: new Date().toISOString(),
+      version: 1,
+      versions: [{
+        id: `version-${docId}-v1`,
+        version: 1,
+        uploadedBy: document.uploadedBy,
+        uploadedAt: new Date().toISOString(),
+        url: document.url,
+        changes: 'Initial version'
+      }]
+    }
+    
+    // Add document to global documents array
+    documents.value.push(newDocument)
+    saveToLocalStorage()
+    return newDocument
+  }
+
   const addDocumentToTask = (taskId: string, document: Omit<Document, 'id' | 'uploadedAt' | 'version' | 'versions'>) => {
     const docId = `doc-${Date.now()}`
     const newDocument: Document = {
@@ -182,6 +220,19 @@ export const useDataService = () => {
     
     saveToLocalStorage()
     return newDocument
+  }
+
+  const deleteDocumentsByTaskId = (taskIdHint: string) => {
+    const initialLength = documents.value.length
+    documents.value = documents.value.filter(doc => 
+      !doc.description?.includes(taskIdHint)
+    )
+    
+    if (documents.value.length !== initialLength) {
+      saveToLocalStorage()
+      return true
+    }
+    return false
   }
   
   // Comment Methods
@@ -294,12 +345,15 @@ export const useDataService = () => {
     getTask,
     updateTaskStatus,
     addTask,
+    deleteTask,
     
     // Document methods
     getDocuments,
     getDocument,
     getDocumentsForTask,
+    addDocument,
     addDocumentToTask,
+    deleteDocumentsByTaskId,
     
     // Comment methods
     getComments,

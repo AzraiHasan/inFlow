@@ -163,12 +163,37 @@
               </div>
             </div>
             
-            <div class="flex justify-end gap-2 pt-4">
-              <UButton color="neutral" @click="isEditModalOpen = false">Cancel</UButton>
-              <UButton color="primary" @click="saveTaskEdit">Save</UButton>
+            <div class="flex justify-between pt-4">
+              <UButton color="error" variant="outline" @click="showDeleteConfirmation = true">Delete</UButton>
+              <div class="flex gap-2">
+                <UButton color="neutral" @click="isEditModalOpen = false">Cancel</UButton>
+                <UButton color="primary" @click="saveTaskEdit">Save</UButton>
+              </div>
             </div>
           </div>
         </UForm>
+      </template>
+    </UModal>
+
+    <!-- Delete Confirmation Modal -->
+    <UModal 
+      v-model:open="showDeleteConfirmation"
+      title="Delete Task"
+      description="Are you sure you want to delete this task? This action cannot be undone."
+    >
+      <template #body>
+        <div class="flex items-center gap-3 p-4">
+          <UIcon name="i-heroicons-exclamation-triangle" class="text-red-500 text-2xl" />
+          <div>
+            <p class="font-medium text-gray-900">Are you sure you want to delete this task?</p>
+            <p class="text-sm text-gray-600 mt-1">This action cannot be undone.</p>
+          </div>
+        </div>
+        
+        <div class="flex justify-end gap-2 px-4 pb-4">
+          <UButton color="neutral" variant="ghost" @click="showDeleteConfirmation = false">Cancel</UButton>
+          <UButton color="error" @click="confirmDeleteTask">Delete</UButton>
+        </div>
       </template>
     </UModal>
   </div>
@@ -211,6 +236,7 @@ const isAssignModalOpen = ref(false)
 const selectedTaskForAssignment = ref<TaskData | null>(null)
 const isEditModalOpen = ref(false)
 const selectedTaskForEdit = ref<TaskData | null>(null)
+const showDeleteConfirmation = ref(false)
 const editFormState = reactive({
   category: '',
   description: '',
@@ -511,6 +537,25 @@ const saveTaskEdit = () => {
     }
     
     demoTableStore.updateTask(selectedTaskForEdit.value.id, updatedTask)
+    isEditModalOpen.value = false
+    selectedTaskForEdit.value = null
+  }
+}
+
+const confirmDeleteTask = () => {
+  if (selectedTaskForEdit.value) {
+    const taskId = selectedTaskForEdit.value.id
+    
+    // Delete from demo table store
+    const deleted = demoTableStore.deleteTask(taskId)
+    
+    if (deleted) {
+      // Also remove associated documents from data service
+      dataService.deleteDocumentsByTaskId(`demo-task-${taskId}`)
+    }
+    
+    // Close modals and reset state
+    showDeleteConfirmation.value = false
     isEditModalOpen.value = false
     selectedTaskForEdit.value = null
   }

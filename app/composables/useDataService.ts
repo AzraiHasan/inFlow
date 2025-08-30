@@ -172,6 +172,20 @@ export const useDataService = () => {
     return newDocument
   }
 
+  // Delete documents by task ID hint
+  const deleteDocumentsByTaskId = (taskIdHint: string) => {
+    const initialLength = documents.value.length
+    documents.value = documents.value.filter(doc => 
+      !doc.description?.includes(taskIdHint)
+    )
+    
+    if (documents.value.length !== initialLength) {
+      saveToLocalStorage()
+      return true
+    }
+    return false
+  }
+
   // Get statistics for analytics
   const getAnalytics = () => {
     const totalTasks = tasks.value.length
@@ -225,6 +239,7 @@ export const useDataService = () => {
     updateTask,
     addComment,
     addDocument,
+    deleteDocumentsByTaskId,
     getAnalytics,
     saveToLocalStorage
   }

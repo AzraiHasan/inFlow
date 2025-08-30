@@ -179,6 +179,28 @@ export const useDemoTableStore = defineStore('demoTable', () => {
     return null
   }
 
+  const deleteTask = (taskId: string) => {
+    // Check unassigned tasks first
+    let taskIndex = unassignedTasks.value.findIndex(task => task.id === taskId)
+    
+    if (taskIndex !== -1) {
+      unassignedTasks.value.splice(taskIndex, 1)
+      saveToLocalStorage()
+      return true
+    }
+    
+    // Check assigned tasks if not found in unassigned
+    taskIndex = assignedTasks.value.findIndex(task => task.id === taskId)
+    
+    if (taskIndex !== -1) {
+      assignedTasks.value.splice(taskIndex, 1)
+      saveToLocalStorage()
+      return true
+    }
+    
+    return false
+  }
+
   const resetData = () => {
     assignedTasks.value = []
     initializeDefaultTasks()
@@ -202,6 +224,7 @@ export const useDemoTableStore = defineStore('demoTable', () => {
     unassignTask,
     updateTaskStatus,
     updateTask,
+    deleteTask,
     resetData,
     saveToLocalStorage
   }
