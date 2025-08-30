@@ -90,6 +90,72 @@
         </div>
       </template>
     </UModal>
+
+    <!-- Edit Modal -->
+    <UModal 
+      v-model:open="isEditModalOpen"
+      title="Edit Task"
+      description="Update task details"
+    >
+      <template #body>
+        <UForm :state="editFormState">
+          <div class="space-y-4">
+            <div class="flex gap-4">
+              <UInput 
+                v-model="editFormState.category"
+                label="Category"
+                placeholder="Enter task category"
+                class="flex-1"
+              />
+              
+              <UInput 
+                v-model="editFormState.description"
+                label="Description"
+                placeholder="Enter task description"
+                class="flex-1"
+              />
+            </div>
+            
+            <div class="flex gap-4">
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <UDropdownMenu 
+                  :items="statusDropdownItems"
+                  :ui="{ content: 'w-full' }"
+                >
+                  <UButton 
+                    variant="outline" 
+                    :label="editFormState.status || 'Select status'"
+                    trailing-icon="i-heroicons-chevron-down-20-solid"
+                    class="w-full justify-between"
+                  />
+                </UDropdownMenu>
+              </div>
+              
+              <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <UDropdownMenu 
+                  :items="priorityDropdownItems"
+                  :ui="{ content: 'w-full' }"
+                >
+                  <UButton 
+                    variant="outline" 
+                    :label="editFormState.priority || 'Select priority'"
+                    trailing-icon="i-heroicons-chevron-down-20-solid"
+                    class="w-full justify-between"
+                  />
+                </UDropdownMenu>
+              </div>
+            </div>
+            
+            <div class="flex justify-end gap-2 pt-4">
+              <UButton color="gray" @click="isEditModalOpen = false">Cancel</UButton>
+              <UButton color="primary" @click="saveTaskEdit">Save</UButton>
+            </div>
+          </div>
+        </UForm>
+      </template>
+    </UModal>
   </div>
 </template>
 
@@ -108,6 +174,14 @@ const formState = reactive({
 
 const isAssignModalOpen = ref(false)
 const selectedTaskForAssignment = ref<TaskData | null>(null)
+const isEditModalOpen = ref(false)
+const selectedTaskForEdit = ref<TaskData | null>(null)
+const editFormState = reactive({
+  category: '',
+  description: '',
+  status: '',
+  priority: ''
+})
 
 const availableAssignees = [
   'Sarah Chen',
@@ -117,6 +191,38 @@ const availableAssignees = [
   'Jamie Liu',
   'Chris Park'
 ]
+
+const statusOptions = [
+  'Pending',
+  'In Progress', 
+  'Completed',
+  'Scheduled',
+  'On Track'
+]
+
+const priorityOptions = [
+  'Low',
+  'Medium',
+  'High'
+]
+
+const statusDropdownItems = computed(() => [
+  statusOptions.map(status => ({
+    label: status,
+    click: () => {
+      editFormState.status = status
+    }
+  }))
+])
+
+const priorityDropdownItems = computed(() => [
+  priorityOptions.map(priority => ({
+    label: priority,
+    click: () => {
+      editFormState.priority = priority
+    }
+  }))
+])
 
 // Initialize store data on mount
 onMounted(() => {
@@ -149,6 +255,21 @@ const tableColumns = [
         }, () => 'Assign')
       }
       return task.assignee
+    }
+  },
+  {
+    key: 'edit',
+    header: 'Edit',
+    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
+      const task = row.original || row
+      return h(resolveComponent('UButton'), {
+        variant: 'ghost',
+        size: 'xs',
+        onClick: () => openEditModal(task)
+      }, () => h(resolveComponent('UIcon'), {
+        name: 'i-heroicons-pencil',
+        class: 'w-4 h-4'
+      }))
     }
   }
 ]
@@ -212,6 +333,31 @@ const assignTask = (assigneeName: string) => {
     }
     isAssignModalOpen.value = false
     selectedTaskForAssignment.value = null
+  }
+}
+
+const openEditModal = (task: TaskData) => {
+  selectedTaskForEdit.value = task
+  const [category, description] = task.task.split(': ')
+  editFormState.category = category || ''
+  editFormState.description = description || task.task
+  editFormState.status = task.status
+  editFormState.priority = task.priority
+  isEditModalOpen.value = true
+}
+
+const saveTaskEdit = () => {
+  if (selectedTaskForEdit.value && editFormState.category.trim() && editFormState.description.trim()) {
+    const updatedTask = {
+      ...selectedTaskForEdit.value,
+      task: `${editFormState.category}: ${editFormState.description}`,
+      status: editFormState.status,
+      priority: editFormState.priority
+    }
+    
+    demoTableStore.updateTask(selectedTaskForEdit.value.id, updatedTask)
+    isEditModalOpen.value = false
+    selectedTaskForEdit.value = null
   }
 }
 

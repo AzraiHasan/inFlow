@@ -157,6 +157,28 @@ export const useDemoTableStore = defineStore('demoTable', () => {
     return null
   }
 
+  const updateTask = (taskId: string, updatedTask: Partial<TaskData>) => {
+    // Check unassigned tasks first
+    let taskIndex = unassignedTasks.value.findIndex(task => task.id === taskId)
+    
+    if (taskIndex !== -1) {
+      unassignedTasks.value[taskIndex] = { ...unassignedTasks.value[taskIndex], ...updatedTask }
+      saveToLocalStorage()
+      return unassignedTasks.value[taskIndex]
+    }
+    
+    // Check assigned tasks if not found in unassigned
+    taskIndex = assignedTasks.value.findIndex(task => task.id === taskId)
+    
+    if (taskIndex !== -1) {
+      assignedTasks.value[taskIndex] = { ...assignedTasks.value[taskIndex], ...updatedTask }
+      saveToLocalStorage()
+      return assignedTasks.value[taskIndex]
+    }
+    
+    return null
+  }
+
   const resetData = () => {
     assignedTasks.value = []
     initializeDefaultTasks()
@@ -179,6 +201,7 @@ export const useDemoTableStore = defineStore('demoTable', () => {
     assignTask,
     unassignTask,
     updateTaskStatus,
+    updateTask,
     resetData,
     saveToLocalStorage
   }
