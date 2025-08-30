@@ -37,18 +37,28 @@ export const useDataService = () => {
         const storedComments = localStorage.getItem(STORAGE_KEYS.COMMENTS)
         const storedPersona = localStorage.getItem(STORAGE_KEYS.ACTIVE_PERSONA)
         
-        users.value = storedUsers ? JSON.parse(storedUsers) : demoUsers
-        tasks.value = storedTasks ? JSON.parse(storedTasks) : demoTasks
-        documents.value = storedDocuments ? JSON.parse(storedDocuments) : demoDocuments
-        comments.value = storedComments ? JSON.parse(storedComments) : demoComments
-        activePersonaId.value = storedPersona || demoUsers[0]?.id || null
+        users.value = storedUsers ? JSON.parse(storedUsers) : []
+        tasks.value = storedTasks ? JSON.parse(storedTasks) : []
+        documents.value = storedDocuments ? JSON.parse(storedDocuments) : []
+        comments.value = storedComments ? JSON.parse(storedComments) : []
+        activePersonaId.value = storedPersona || null
       } else {
-        // First time initialization - use demo data
-        resetToDefaults()
+        // First time initialization - start with empty data instead of demo data
+        users.value = []
+        tasks.value = []
+        documents.value = []
+        comments.value = []
+        activePersonaId.value = null
+        // Don't mark as initialized so user can manually load demo data if needed
       }
     } catch (error) {
       console.error('Error initializing demo data:', error)
-      resetToDefaults()
+      // On error, start with empty data instead of demo data
+      users.value = []
+      tasks.value = []
+      documents.value = []
+      comments.value = []
+      activePersonaId.value = null
     }
   }
   
@@ -235,6 +245,12 @@ export const useDataService = () => {
     return false
   }
   
+  // Clear all documents
+  const clearAllDocuments = () => {
+    documents.value.splice(0, documents.value.length)
+    saveToLocalStorage()
+  }
+  
   // Comment Methods
   const getComments = () => comments.value
   
@@ -354,6 +370,7 @@ export const useDataService = () => {
     addDocument,
     addDocumentToTask,
     deleteDocumentsByTaskId,
+    clearAllDocuments,
     
     // Comment methods
     getComments,

@@ -185,6 +185,12 @@ export const useDataService = () => {
     }
     return false
   }
+  
+  // Clear all documents
+  const clearAllDocuments = () => {
+    documents.value.splice(0, documents.value.length)
+    saveToLocalStorage()
+  }
 
   // Get statistics for analytics
   const getAnalytics = () => {
@@ -240,6 +246,7 @@ export const useDataService = () => {
     addComment,
     addDocument,
     deleteDocumentsByTaskId,
+    clearAllDocuments,
     getAnalytics,
     saveToLocalStorage
   }

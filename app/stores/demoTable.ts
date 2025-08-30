@@ -56,35 +56,35 @@ export const useDemoTableStore = defineStore('demoTable', () => {
   const initializeDefaultTasks = () => {
     unassignedTasks.value = [
       {
-        id: '1',
+        id: 'demo-table-1',
         task: 'Site Survey Complete',
         status: 'Completed',
         priority: 'High',
         assignee: null
       },
       {
-        id: '2',
+        id: 'demo-table-2',
         task: 'Equipment Installation',
         status: 'In Progress',
         priority: 'High',
         assignee: null
       },
       {
-        id: '3',
+        id: 'demo-table-3',
         task: 'Compliance Review',
         status: 'Pending',
         priority: 'Medium',
         assignee: null
       },
       {
-        id: '4',
+        id: 'demo-table-4',
         task: 'Network Testing',
         status: 'Scheduled',
         priority: 'High',
         assignee: null
       },
       {
-        id: '5',
+        id: 'demo-table-5',
         task: 'Project Milestone',
         status: 'On Track',
         priority: 'Low',
@@ -97,7 +97,7 @@ export const useDemoTableStore = defineStore('demoTable', () => {
   const addTask = (taskData: Omit<TaskData, 'id' | 'assignee'>) => {
     const newTask: TaskData = {
       ...taskData,
-      id: (Date.now()).toString(),
+      id: `demo-table-${Date.now()}`,
       assignee: null
     }
     unassignedTasks.value.push(newTask)
