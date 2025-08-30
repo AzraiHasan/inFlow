@@ -28,6 +28,8 @@ export interface Document {
   name: string
   type: string
   size: number
+  category: DocumentCategory
+  description?: string
   uploadedBy: string
   uploadedAt: string
   version: number
@@ -95,4 +97,17 @@ export enum Department {
   PROJECT_MANAGEMENT = 'project_management',
   ENGINEERING = 'engineering',
   OPERATIONS = 'operations'
+}
+
+export enum DocumentCategory {
+  SITE_SURVEY = 'site_survey',
+  ENVIRONMENTAL = 'environmental',
+  SAFETY_INSPECTION = 'safety_inspection',
+  MAINTENANCE_REPORT = 'maintenance_report',
+  COMPLIANCE_DOCUMENT = 'compliance_document',
+  TECHNICAL_SPECIFICATION = 'technical_specification',
+  INSTALLATION_GUIDE = 'installation_guide',
+  PERMIT = 'permit',
+  CONTRACT = 'contract',
+  OTHER = 'other'
 }

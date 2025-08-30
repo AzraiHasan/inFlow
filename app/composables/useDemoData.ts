@@ -1,5 +1,5 @@
 import type { User, Task, Document, Comment} from '~/types';
-import { TaskType, TaskStatus, TaskPriority, UserRole, Department } from '~/types'
+import { TaskType, TaskStatus, TaskPriority, UserRole, Department, DocumentCategory } from '~/types'
 
 export const useDemoData = () => {
   // Demo Users - All 6 personas for TowerCo workflow
@@ -61,6 +61,8 @@ export const useDemoData = () => {
       name: 'Site Survey Report - Tower 247',
       type: 'application/pdf',
       size: 2457600, // 2.4MB
+      category: DocumentCategory.SITE_SURVEY,
+      description: 'Comprehensive site survey including soil analysis, access road evaluation, and preliminary foundation requirements for Tower 247.',
       uploadedBy: 'user-1',
       uploadedAt: '2024-08-20T14:30:00Z',
       version: 2,
@@ -89,6 +91,8 @@ export const useDemoData = () => {
       name: 'Environmental Impact Assessment',
       type: 'application/pdf',
       size: 5242880, // 5MB
+      category: DocumentCategory.ENVIRONMENTAL,
+      description: 'Environmental impact assessment report including wildlife protection regulations and permit requirements.',
       uploadedBy: 'user-3',
       uploadedAt: '2024-08-21T09:45:00Z',
       version: 1,
@@ -109,6 +113,8 @@ export const useDemoData = () => {
       name: 'Tower Installation Checklist',
       type: 'application/vnd.ms-excel',
       size: 1024000, // 1MB
+      category: DocumentCategory.INSTALLATION_GUIDE,
+      description: 'Comprehensive pre-installation checklist including equipment verification, safety protocols, and team readiness assessment.',
       uploadedBy: 'user-5',
       uploadedAt: '2024-08-22T16:20:00Z',
       version: 3,

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { User, Task, Document, Comment } from '~/types';
+import type { User, Task, Document, Comment as _Comment } from '~/types';
 import { TaskStatus, TaskPriority } from '~/types'
 
 export const useWorkflowStore = defineStore('workflow', () => {

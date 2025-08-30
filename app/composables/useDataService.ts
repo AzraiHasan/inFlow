@@ -1,5 +1,5 @@
 import type { User, Task, Document, Comment} from '~/types';
-import { UserRole } from '~/types'
+import { UserRole as _UserRole } from '~/types'
 
 export const useDataService = () => {
   const { users: demoUsers, tasks: demoTasks, documents: demoDocuments, comments: demoComments } = useDemoData()
