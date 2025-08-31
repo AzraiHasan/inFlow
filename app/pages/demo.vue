@@ -9,64 +9,13 @@
       </div>
       
       <div class="grid grid-cols-3 gap-6">
-        <!-- First Column - UForm -->
+        <!-- First Column - Task Form -->
         <div class="col-span-1">
-          <UForm :state="formState">
-            <div class="space-y-4">
-              <h3 class="text-base font-semibold leading-6 text-gray-900 mb-4">
-                New Task
-              </h3>
-              
-              <div class="flex gap-4">
-                <div class="flex-1">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <USelect
-                    v-model="formState.category"
-                    :items="categoryOptions"
-                    placeholder="Choose a category..."
-                    variant="outline"
-                    class="w-full"
-                    :ui="{
-                      trailingIcon: 'group-data-[state=open]:rotate-180',
-                      content: 'w-full'
-                    }"
-                  />
-                </div>
-                
-                <div class="flex-1">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <UInput 
-                    v-model="formState.description"
-                    placeholder="Enter task description"
-                    class="w-full"
-                  />
-                </div>
-              </div>
-              
-              <UFileUpload 
-                v-model="formState.attachment"
-                label="Drop your file here"
-                accept="image/png, image/jpeg, application/pdf"
-                color="primary"
-                highlight
-                description="PDF, PNG, JPG (max. 2MB)"
-              />
-              
-              <UTextarea 
-                v-model="formState.note"
-                label="Additional note (optional):"
-                placeholder="Enter additional notes..."
-                class="w-full"
-              />
-              
-              <div class="flex justify-end pt-4">
-                <div class="flex gap-2">
-                  <UButton color="error" variant="outline" size="xs" @click="resetAllData">Reset Data</UButton>
-                  <UButton color="primary" @click="createTask">Create</UButton>
-                </div>
-              </div>
-            </div>
-          </UForm>
+          <TaskForm 
+            show-reset-button
+            @submit="handleTaskSubmit"
+            @reset="resetAllData"
+          />
         </div>
         
         <!-- Second Column - UTable (2/3 width) -->
@@ -147,12 +96,6 @@ const fileToBase64 = (file: File): Promise<string> => {
   })
 }
 
-const formState = reactive({
-  category: undefined as string | undefined,
-  description: '',
-  attachment: null as File | null,
-  note: ''
-})
 
 const isAssignModalOpen = ref(false)
 const selectedTaskForAssignment = ref<TaskData | null>(null)
@@ -163,14 +106,6 @@ const showPreview = ref(false)
 const selectedDocument = ref<Document | null>(null)
 
 
-const categoryOptions = [
-  'LCN',
-  'SAR', 
-  'TP',
-  'LOO',
-  'TA',
-  'Other'
-]
 
 
 
@@ -178,7 +113,6 @@ const categoryOptions = [
 onMounted(() => {
   demoTableStore.loadFromLocalStorage()
   console.log('FILE UPLOAD DEBUG: === DEMO TABLE STORE DEBUG ===')
-  console.log('FILE UPLOAD DEBUG: Form state on mount:', formState)
   console.log('FILE UPLOAD DEBUG: All tasks loaded:', demoTableStore.unassignedTasks.map(t => ({
     id: t.id,
     task: t.task,
@@ -364,31 +298,24 @@ const assignedTaskColumns = [
   }
 ]
 
-const createTask = async () => {
-  console.log('=== FILE UPLOAD DEBUG: Create button clicked ===')
-  console.log('FILE UPLOAD DEBUG: Form state before validation:', {
-    category: formState.category,
-    description: formState.description,
-    hasAttachment: !!formState.attachment,
-    attachmentName: formState.attachment?.name,
-    attachmentSize: formState.attachment?.size,
-    attachmentType: formState.attachment?.type,
-    note: formState.note
+const handleTaskSubmit = async (formData: { category: string | undefined; description: string; attachment: File | null; note: string }) => {
+  console.log('=== FILE UPLOAD DEBUG: Task form submitted ===')
+  console.log('FILE UPLOAD DEBUG: Form data:', {
+    category: formData.category,
+    description: formData.description,
+    hasAttachment: !!formData.attachment,
+    attachmentName: formData.attachment?.name,
+    attachmentSize: formData.attachment?.size,
+    attachmentType: formData.attachment?.type,
+    note: formData.note
   })
-  
-  if (!formState.category || !formState.description.trim()) {
-    console.log('FILE UPLOAD DEBUG: Validation failed - category or description is empty')
-    console.log('FILE UPLOAD DEBUG: Category:', formState.category)
-    console.log('FILE UPLOAD DEBUG: Description:', formState.description)
-    return
-  }
 
   // Create task for demo table
   const newTask = {
-    task: `${formState.category}: ${formState.description}`,
+    task: `${formData.category}: ${formData.description}`,
     status: 'Pending' as const,
     priority: 'Medium' as const,
-    note: formState.note
+    note: formData.note
   }
   
   console.log('FILE UPLOAD DEBUG: Creating task:', newTask)
@@ -397,10 +324,10 @@ const createTask = async () => {
   console.log('FILE UPLOAD DEBUG: Current unassigned tasks count:', demoTableStore.unassignedTasks.length)
 
   // Process file attachment if present
-  console.log('FILE UPLOAD DEBUG: Checking for attachment, formState.attachment:', formState.attachment)
-  if (formState.attachment) {
+  console.log('FILE UPLOAD DEBUG: Checking for attachment, formData.attachment:', formData.attachment)
+  if (formData.attachment) {
     try {
-      const file = formState.attachment
+      const file = formData.attachment
       console.log('FILE UPLOAD DEBUG: Processing attachment:', {
         name: file.name,
         type: file.type,
@@ -446,25 +373,9 @@ const createTask = async () => {
       console.error('FILE UPLOAD DEBUG ERROR: Stack trace:', error instanceof Error ? error.stack : String(error))
     }
   } else {
-    console.log('FILE UPLOAD DEBUG: No attachment found in formState')
+    console.log('FILE UPLOAD DEBUG: No attachment found in formData')
   }
-
-  // Reset form
-  console.log('FILE UPLOAD DEBUG: Resetting form')
-  const preResetState = {
-    category: formState.category,
-    description: formState.description,
-    hasAttachment: !!formState.attachment,
-    note: formState.note
-  }
-  console.log('FILE UPLOAD DEBUG: State before reset:', preResetState)
   
-  formState.category = undefined
-  formState.description = ''
-  formState.attachment = null
-  formState.note = ''
-  
-  console.log('FILE UPLOAD DEBUG: Form reset complete')
   console.log('FILE UPLOAD DEBUG: Final task count:', demoTableStore.unassignedTasks.length)
   console.log('FILE UPLOAD DEBUG: Final document count:', dataService.documents.value.length)
   console.log('=== FILE UPLOAD DEBUG: Process complete ===')
