@@ -88,191 +88,29 @@
       </div>
     </div>
 
-    <!-- Assign Modal -->
-    <UModal 
+    <!-- Modal Components -->
+    <AssignTaskModal 
       v-model:open="isAssignModalOpen"
-      title="Assign Task"
-      description="Select an assignee for this task"
-    >
-      <template #body>
-        <div class="space-y-3">
-          <div v-for="assignee in availableAssignees" :key="assignee">
-            <UButton 
-              :label="assignee"
-              variant="outline"
-              class="w-full justify-start"
-              @click="assignTask(assignee)"
-            >
-              {{ assignee }}
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
-
-    <!-- Edit Modal -->
-    <UModal 
+      :task="selectedTaskForAssignment"
+      @assign="assignTask"
+    />
+    
+    <EditTaskModal 
       v-model:open="isEditModalOpen"
-      title="Edit Task"
-      description="Update task details"
-    >
-      <template #body>
-        <UForm :state="editFormState">
-          <div class="space-y-4">
-            <div class="flex gap-4">
-              <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <UInput 
-                  v-model="editFormState.category"
-                  placeholder="Enter task category"
-                />
-              </div>
-              
-              <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <UInput 
-                  v-model="editFormState.description"
-                  placeholder="Enter task description"
-                />
-              </div>
-            </div>
-            
-            <div class="flex gap-4">
-              <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <USelect
-                  v-model="editFormState.status"
-                  :items="statusOptions"
-                  placeholder="Select status"
-                  variant="outline"
-                  class="w-full"
-                  :ui="{
-                    trailingIcon: 'group-data-[state=open]:rotate-180',
-                    content: 'w-full'
-                  }"
-                />
-              </div>
-              
-              <div class="flex-1">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                <USelect
-                  v-model="editFormState.priority"
-                  :items="priorityOptions"
-                  placeholder="Select priority"
-                  variant="outline"
-                  class="w-full"
-                  :ui="{
-                    trailingIcon: 'group-data-[state=open]:rotate-180',
-                    content: 'w-full'
-                  }"
-                />
-              </div>
-            </div>
-            
-            <UTextarea 
-              v-model="editFormState.note"
-              label="Additional note (optional):"
-              placeholder="Enter additional notes..."
-              class="w-full"
-            />
-            
-            <div class="flex justify-between pt-4">
-              <UButton color="error" variant="outline" @click="showDeleteConfirmation = true">Delete</UButton>
-              <div class="flex gap-2">
-                <UButton color="neutral" @click="isEditModalOpen = false">Cancel</UButton>
-                <UButton color="primary" @click="saveTaskEdit">Save</UButton>
-              </div>
-            </div>
-          </div>
-        </UForm>
-      </template>
-    </UModal>
-
-    <!-- Delete Confirmation Modal -->
-    <UModal 
+      :task="selectedTaskForEdit"
+      @save="saveTaskEdit"
+      @delete="showDeleteConfirmation = true"
+    />
+    
+    <DeleteConfirmationModal 
       v-model:open="showDeleteConfirmation"
-      title="Delete Task"
-      description="Are you sure you want to delete this task? This action cannot be undone."
-    >
-      <template #body>
-        <div class="flex items-center gap-3 p-4">
-          <UIcon name="i-heroicons-exclamation-triangle" class="text-red-500 text-2xl" />
-          <div>
-            <p class="font-medium text-gray-900">Are you sure you want to delete this task?</p>
-            <p class="text-sm text-gray-600 mt-1">This action cannot be undone.</p>
-          </div>
-        </div>
-        
-        <div class="flex justify-end gap-2 px-4 pb-4">
-          <UButton color="neutral" variant="ghost" @click="showDeleteConfirmation = false">Cancel</UButton>
-          <UButton color="error" @click="confirmDeleteTask">Delete</UButton>
-        </div>
-      </template>
-    </UModal>
-
-    <!-- File Preview Modal -->
-    <UModal 
+      @confirm="confirmDeleteTask"
+    />
+    
+    <FilePreviewModal 
       v-model:open="showPreview"
-      :title="selectedDocument?.name || 'File Preview'"
-      :description="`Preview of ${selectedDocument?.name || 'file'}`"
-      fullscreen
-    >
-      <template #body>
-        <div class="p-8 m-4">
-          <!-- Image Preview -->
-          <div v-if="isImage(selectedDocument)" class="flex justify-center mb-6">
-            <nuxt-img 
-              :src="selectedDocument?.url || ''" 
-              :alt="selectedDocument?.name || 'Image'"
-              class="max-w-full max-h-[65vh] object-contain rounded-lg shadow-lg"
-            />
-          </div>
-          
-          <!-- PDF Preview -->
-          <div v-else-if="isPDF(selectedDocument)" class="w-full h-[65vh] mb-6">
-            <iframe 
-              :src="selectedDocument?.url || ''"
-              class="w-full h-full border rounded-lg shadow-sm"
-              title="PDF Preview"
-            />
-          </div>
-          
-          <!-- Other File Info -->
-          <div v-else class="text-center p-8 mb-6">
-            <UIcon 
-              name="i-heroicons-document-text" 
-              class="mx-auto text-6xl text-gray-400 mb-4"
-            />
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ selectedDocument?.name }}</h3>
-            <p class="text-gray-600 mb-1">File Type: {{ selectedDocument?.type }}</p>
-            <p class="text-gray-600 mb-4">Size: {{ formatFileSize(selectedDocument?.size || 0) }}</p>
-            <p class="text-sm text-gray-500">Preview not available for this file type</p>
-          </div>
-        </div>
-      </template>
-      
-      <template #footer>
-        <div class="flex justify-between items-center px-8 py-6 mx-4 border-t bg-gray-50/50">
-          <div class="text-sm text-gray-600">
-            {{ selectedDocument?.name }} • {{ formatFileSize(selectedDocument?.size || 0) }}
-          </div>
-          <div class="flex gap-3">
-            <UButton 
-              variant="outline"
-              @click="showPreview = false"
-            >
-              Close
-            </UButton>
-            <UButton 
-              icon="i-heroicons-arrow-down-tray"
-              @click="downloadFromPreview()"
-            >
-              Download
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+      :document="selectedDocument"
+    />
   </div>
 </template>
 
@@ -323,36 +161,7 @@ const selectedTaskForEdit = ref<TaskData | null>(null)
 const showDeleteConfirmation = ref(false)
 const showPreview = ref(false)
 const selectedDocument = ref<Document | null>(null)
-const editFormState = reactive({
-  category: '',
-  description: '',
-  status: undefined as 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track' | undefined,
-  priority: undefined as 'High' | 'Medium' | 'Low' | undefined,
-  note: ''
-})
 
-const availableAssignees = [
-  'Sarah Chen',
-  'Marcus Rodriguez',
-  'Dr. Emily Watson',
-  'Alex Thompson',
-  'Jamie Liu',
-  'Chris Park'
-]
-
-const statusOptions: ('Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track')[] = [
-  'Pending',
-  'In Progress', 
-  'Completed',
-  'Scheduled',
-  'On Track'
-]
-
-const priorityOptions: ('High' | 'Medium' | 'Low')[] = [
-  'Low',
-  'Medium',
-  'High'
-]
 
 const categoryOptions = [
   'LCN',
@@ -668,46 +477,24 @@ const openAssignModal = (task: TaskData) => {
   console.log('Modal opened, selectedTaskForAssignment:', selectedTaskForAssignment.value)
 }
 
-const assignTask = (assigneeName: string) => {
-  if (selectedTaskForAssignment.value) {
-    const result = demoTableStore.assignTask(selectedTaskForAssignment.value.id, assigneeName)
-    if (result) {
-      console.log('Task successfully assigned:', result)
-    } else {
-      console.error('Could not find task to assign!')
-    }
-    isAssignModalOpen.value = false
-    selectedTaskForAssignment.value = null
+const assignTask = (assigneeName: string, taskId: string) => {
+  const result = demoTableStore.assignTask(taskId, assigneeName)
+  if (result) {
+    console.log('Task successfully assigned:', result)
+  } else {
+    console.error('Could not find task to assign!')
   }
+  selectedTaskForAssignment.value = null
 }
 
 const openEditModal = (task: TaskData) => {
   selectedTaskForEdit.value = task
-  const [category, description] = task.task.split(': ')
-  editFormState.category = category || ''
-  editFormState.description = description || task.task
-  editFormState.status = task.status
-  editFormState.priority = task.priority
-  editFormState.note = task.note || ''
   isEditModalOpen.value = true
 }
 
-const saveTaskEdit = () => {
-  if (selectedTaskForEdit.value && 
-      editFormState.category.trim() && 
-      editFormState.description.trim() &&
-      editFormState.status &&
-      editFormState.priority) {
-    const updatedTask = {
-      ...selectedTaskForEdit.value,
-      task: `${editFormState.category}: ${editFormState.description}`,
-      status: editFormState.status as 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track',
-      priority: editFormState.priority as 'High' | 'Medium' | 'Low',
-      note: editFormState.note
-    }
-    
+const saveTaskEdit = (updatedTask: Partial<TaskData>) => {
+  if (selectedTaskForEdit.value) {
     demoTableStore.updateTask(selectedTaskForEdit.value.id, updatedTask)
-    isEditModalOpen.value = false
     selectedTaskForEdit.value = null
   }
 }
@@ -725,7 +512,6 @@ const confirmDeleteTask = () => {
     }
     
     // Close modals and reset state
-    showDeleteConfirmation.value = false
     isEditModalOpen.value = false
     selectedTaskForEdit.value = null
   }
@@ -736,32 +522,6 @@ const openPreview = (document: Document) => {
   showPreview.value = true
 }
 
-const isImage = (document: Document | null) => {
-  return document?.type?.startsWith('image/')
-}
-
-const isPDF = (document: Document | null) => {
-  return document?.type === 'application/pdf'
-}
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-const downloadFromPreview = () => {
-  if (selectedDocument.value) {
-    const link = document.createElement('a')
-    link.href = selectedDocument.value.url
-    link.download = selectedDocument.value.name
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-}
 
 const resetAllData = () => {
   if (confirm('This will clear ALL data (tasks, documents, etc.) and start fresh. Continue?')) {
