@@ -31,20 +31,56 @@
       </div>
 
       <!-- Selected File Preview -->
-      <div v-if="selectedFile" class="p-4 bg-gray-50 rounded-lg">
-        <div class="flex items-center gap-3">
-          <UIcon :name="getFileIcon(selectedFile.type)" class="text-2xl" />
-          <div class="flex-1">
-            <p class="font-medium">{{ selectedFile.name }}</p>
-            <p class="text-sm text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+      <div v-if="selectedFile" class="space-y-4">
+        <!-- File Info Header -->
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div class="flex items-center gap-3">
+            <UIcon :name="getFileIcon(selectedFile.type)" class="text-2xl" />
+            <div class="flex-1">
+              <p class="font-medium">{{ selectedFile.name }}</p>
+              <p class="text-sm text-gray-500">{{ formatFileSize(selectedFile.size) }}</p>
+            </div>
           </div>
-          <UButton
-            size="xs"
-            color="red"
-            variant="ghost"
-            icon="i-heroicons-x-mark"
-            @click="removeFile"
+          <div class="flex items-center gap-2">
+            <UButton
+              size="xs"
+              variant="ghost"
+              @click="togglePreview"
+            >
+              <UIcon :name="showPreview ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" />
+              {{ showPreview ? 'Hide' : 'Preview' }}
+            </UButton>
+            <UButton
+              size="xs"
+              color="red"
+              variant="ghost"
+              icon="i-heroicons-x-mark"
+              @click="removeFile"
+            />
+          </div>
+        </div>
+
+        <!-- File Preview -->
+        <div v-if="showPreview && previewDocument" class="border rounded-lg p-4">
+          <FilePreview 
+            :document="previewDocument"
+            :show-metadata="false"
+            :show-download-button="false"
           />
+        </div>
+
+        <!-- Upload Progress -->
+        <div v-if="uploadProgress > 0 && uploadProgress < 100" class="space-y-2">
+          <div class="flex justify-between text-sm">
+            <span>Uploading...</span>
+            <span>{{ uploadProgress }}%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              :style="{ width: `${uploadProgress}%` }"
+            />
+          </div>
         </div>
       </div>
 
@@ -115,6 +151,8 @@ const selectedFiles = ref<File[]>([])
 const selectedCategory = ref<DocumentCategory>()
 const description = ref('')
 const isUploading = ref(false)
+const uploadProgress = ref(0)
+const showPreview = ref(false)
 
 // File validation
 const acceptedFileTypes = 'application/pdf,image/jpeg,image/png'
@@ -129,6 +167,28 @@ const canUpload = computed(() =>
   props.taskId &&
   !isUploading.value
 )
+
+// Create a preview document for the FilePreview component
+const previewDocument = computed(() => {
+  if (!selectedFile.value) return null
+  
+  // Create a temporary URL for preview
+  const url = URL.createObjectURL(selectedFile.value)
+  
+  return {
+    id: 'preview-temp',
+    name: selectedFile.value.name,
+    type: selectedFile.value.type,
+    size: selectedFile.value.size,
+    category: selectedCategory.value || DocumentCategory.OTHER,
+    description: description.value || 'Preview document',
+    uploadedBy: currentPersona.value?.id || 'current-user',
+    uploadedAt: new Date().toISOString(),
+    version: 1,
+    url,
+    versions: []
+  }
+})
 
 // Category options for dropdown
 const categoryOptions = computed(() => [
@@ -151,6 +211,12 @@ const handleFileChange = (files: File[]) => {
 
 const removeFile = () => {
   selectedFiles.value = []
+  showPreview.value = false
+  uploadProgress.value = 0
+}
+
+const togglePreview = () => {
+  showPreview.value = !showPreview.value
 }
 
 const formatFileSize = (bytes: number): string => {
@@ -171,14 +237,31 @@ const handleUpload = async () => {
   if (!canUpload.value || !selectedFile.value || !selectedCategory.value || !props.taskId) return
 
   isUploading.value = true
+  uploadProgress.value = 0
   
   try {
+    // Simulate upload progress
+    const progressInterval = setInterval(() => {
+      uploadProgress.value += Math.random() * 30
+      if (uploadProgress.value >= 90) {
+        clearInterval(progressInterval)
+        uploadProgress.value = 90
+      }
+    }, 100)
+
     // Create a data URL for the file (in a real app, you'd upload to a server)
     const reader = new FileReader()
     const fileData = await new Promise<string>((resolve) => {
-      reader.onload = (e) => resolve(e.target?.result as string)
+      reader.onload = (e) => {
+        clearInterval(progressInterval)
+        uploadProgress.value = 100
+        resolve(e.target?.result as string)
+      }
       reader.readAsDataURL(selectedFile.value!)
     })
+
+    // Small delay to show complete progress
+    await new Promise(resolve => setTimeout(resolve, 200))
 
     // Create document data (omit id and uploadedAt as required by addDocument)
     const documentData = {
@@ -201,6 +284,7 @@ const handleUpload = async () => {
 
   } catch (error) {
     console.error('Upload failed:', error)
+    uploadProgress.value = 0
     // In a real app, you'd show a proper error notification
   } finally {
     isUploading.value = false
@@ -217,5 +301,7 @@ const resetForm = () => {
   selectedCategory.value = undefined
   description.value = ''
   isUploading.value = false
+  uploadProgress.value = 0
+  showPreview.value = false
 }
 </script>
