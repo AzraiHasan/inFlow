@@ -12,14 +12,14 @@
       <div>
         <label class="block text-sm font-medium mb-2">Select File</label>
         <UFileUpload
-          v-model="selectedFiles"
+          v-model="selectedFile"
           :accept="acceptedFileTypes"
           :max-size="maxFileSize"
           :multiple="false"
           @change="handleFileChange"
         >
           <template #default="{ open }">
-            <UButton variant="outline" class="w-full justify-center" @click="open">
+            <UButton variant="outline" class="w-full justify-center" @click="() => open()">
               <UIcon name="i-heroicons-document-plus" class="mr-2" />
               Choose File
             </UButton>
@@ -52,7 +52,7 @@
             </UButton>
             <UButton
               size="xs"
-              color="red"
+              color="error"
               variant="ghost"
               icon="i-heroicons-x-mark"
               @click="removeFile"
@@ -147,7 +147,7 @@ const emit = defineEmits<Emits>()
 const { addDocument, currentPersona } = useDataService()
 
 // File upload state
-const selectedFiles = ref<File[]>([])
+const selectedFile = ref<File | null>(null)
 const selectedCategory = ref<DocumentCategory>()
 const description = ref('')
 const isUploading = ref(false)
@@ -157,12 +157,9 @@ const showPreview = ref(false)
 // File validation
 const acceptedFileTypes = 'application/pdf,image/jpeg,image/png'
 const maxFileSize = 10 * 1024 * 1024 // 10MB
-
-// Computed properties
-const selectedFile = computed(() => selectedFiles.value[0] || null)
-const canUpload = computed(() => 
-  selectedFile.value && 
-  selectedCategory.value && 
+const canUpload = computed(() =>
+  selectedFile.value &&
+  selectedCategory.value &&
   description.value.trim().length > 0 &&
   props.taskId &&
   !isUploading.value
@@ -171,10 +168,10 @@ const canUpload = computed(() =>
 // Create a preview document for the FilePreview component
 const previewDocument = computed(() => {
   if (!selectedFile.value) return null
-  
+
   // Create a temporary URL for preview
   const url = URL.createObjectURL(selectedFile.value)
-  
+
   return {
     id: 'preview-temp',
     name: selectedFile.value.name,
@@ -205,12 +202,14 @@ const categoryOptions = computed(() => [
 ])
 
 // Methods
-const handleFileChange = (files: File[]) => {
-  selectedFiles.value = files
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  selectedFile.value = files?.[0] || null
 }
 
 const removeFile = () => {
-  selectedFiles.value = []
+  selectedFile.value = null
   showPreview.value = false
   uploadProgress.value = 0
 }
@@ -297,7 +296,7 @@ const cancelUpload = () => {
 }
 
 const resetForm = () => {
-  selectedFiles.value = []
+  selectedFile.value = null
   selectedCategory.value = undefined
   description.value = ''
   isUploading.value = false

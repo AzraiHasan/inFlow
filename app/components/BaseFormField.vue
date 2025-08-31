@@ -50,6 +50,6 @@ const props = withDefaults(defineProps<Props>(), {
   labelClass: ''
 })
 
-const fieldId = ref(`field-${Math.random().toString(36).substring(2, 9)}`)
+const fieldId = useId()
 const hasError = computed(() => Boolean(props.error))
 </script>

@@ -61,6 +61,7 @@
               color="primary"
               highlight
               description="PDF, PNG, JPG (max. 2MB)"
+              @update:model-value="handleFileChange"
             />
           </template>
         </BaseFormField>
@@ -146,6 +147,26 @@ const formState = reactive<TaskFormData>({
 const validationErrors = ref<ValidationErrors>({})
 const isSubmitting = ref(false)
 
+// File change handler - defined early for template access
+const handleFileChange = (file: File | null) => {
+  console.log('TaskForm DEBUG: File change detected')
+  console.log('TaskForm DEBUG: File object type:', typeof file)
+  console.log('TaskForm DEBUG: File:', file)
+  
+  if (file) {
+    console.log('TaskForm DEBUG: Selected file:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: file.lastModified
+    })
+    formState.attachment = file
+  } else {
+    console.log('TaskForm DEBUG: No file selected or files cleared')
+    formState.attachment = null
+  }
+}
+
 const categoryOptions = [
   'LCN',
   'SAR', 
@@ -177,6 +198,17 @@ const validateForm = (): boolean => {
 
 const handleSubmit = async (event: Event) => {
   event.preventDefault()
+  
+  console.log('TaskForm DEBUG: Form submitted with data:', {
+    category: formState.category,
+    description: formState.description,
+    attachment: formState.attachment ? {
+      name: formState.attachment.name,
+      type: formState.attachment.type,
+      size: formState.attachment.size
+    } : null,
+    note: formState.note
+  })
   
   if (!validateForm()) {
     return
@@ -223,7 +255,11 @@ watch(
 
 watch(
   () => formState.attachment,
-  () => {
+  (newFile, oldFile) => {
+    console.log('TaskForm DEBUG: Attachment watcher triggered')
+    console.log('TaskForm DEBUG: Old file:', oldFile?.name || 'null')
+    console.log('TaskForm DEBUG: New file:', newFile?.name || 'null')
+    
     if (validationErrors.value.attachment) {
       validationErrors.value.attachment = undefined
     }

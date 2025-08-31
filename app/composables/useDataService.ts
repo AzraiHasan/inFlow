@@ -1,23 +1,30 @@
 import type { User, Task, Document, Comment} from '~/types';
 import { UserRole as _UserRole } from '~/types'
 
+// Global singleton state
+const globalUsers = ref<User[]>([])
+const globalTasks = ref<Task[]>([])
+const globalDocuments = ref<Document[]>([])
+const globalComments = ref<Comment[]>([])
+const globalCurrentPersona = ref<User | null>(null)
+
 export const useDataService = () => {
   const { users: demoUsers, tasks: demoTasks, documents: demoDocuments, comments: demoComments } = useDemoData()
   
-  // Reactive data stores
-  const users = ref<User[]>([])
-  const tasks = ref<Task[]>([])
-  const documents = ref<Document[]>([])
-  const comments = ref<Comment[]>([])
-  const currentPersona = ref<User | null>(null)
+  // Use global singleton state
+  const users = globalUsers
+  const tasks = globalTasks
+  const documents = globalDocuments
+  const comments = globalComments
+  const currentPersona = globalCurrentPersona
   
-  // Local storage keys
+  // Local storage keys - match with demo.vue reset function
   const STORAGE_KEYS = {
-    users: 'towerco-users',
-    tasks: 'towerco-tasks', 
-    documents: 'towerco-documents',
-    comments: 'towerco-comments',
-    currentPersona: 'towerco-current-persona'
+    users: 'inflow-demo-users',
+    tasks: 'inflow-demo-tasks', 
+    documents: 'inflow-demo-documents',
+    comments: 'inflow-demo-comments',
+    currentPersona: 'inflow-active-persona'
   }
 
   // Initialize data from localStorage or use demo data
@@ -223,12 +230,12 @@ export const useDataService = () => {
   }, { deep: true })
 
   return {
-    // State
-    users: readonly(users),
-    tasks: readonly(tasks),
-    documents: readonly(documents),
-    comments: readonly(comments),
-    currentPersona: readonly(currentPersona),
+    // State - Remove readonly to fix reactivity
+    users,
+    tasks,
+    documents,
+    comments,
+    currentPersona,
     
     // Computed
     allPersonas,

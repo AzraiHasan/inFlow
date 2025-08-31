@@ -206,6 +206,9 @@ const handleTaskSubmit = async (formData: { category: string | undefined; descri
       console.log('FILE UPLOAD DEBUG: Current documents in store after adding:', dataService.documents.value.length)
       console.log('FILE UPLOAD DEBUG: All document descriptions:', dataService.documents.value.map(d => ({ id: d.id, description: d.description })))
       
+      // Documents should now appear reactively without page reload
+      console.log('FILE UPLOAD DEBUG: Document upload complete - should trigger reactivity')
+      
     } catch (error) {
       console.error('FILE UPLOAD DEBUG ERROR: Processing file attachment failed:', error)
       console.error('FILE UPLOAD DEBUG ERROR: Stack trace:', error instanceof Error ? error.stack : String(error))
