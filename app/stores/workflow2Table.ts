@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia'
 import type { TaskData } from '~/types'
 
-export const useDemoTableStore = defineStore('demoTable', () => {
+export const useWorkflow2TableStore = defineStore('workflow2Table', () => {
   const unassignedTasks = ref<TaskData[]>([])
   const assignedTasks = ref<TaskData[]>([])
   
   const STORAGE_KEYS = {
-    unassignedTasks: 'towerco-demo-unassigned-tasks',
-    assignedTasks: 'towerco-demo-assigned-tasks'
+    unassignedTasks: 'towerco-workflow2-unassigned-tasks',
+    assignedTasks: 'towerco-workflow2-assigned-tasks'
   }
 
   const saveToLocalStorage = () => {
@@ -16,7 +16,7 @@ export const useDemoTableStore = defineStore('demoTable', () => {
         localStorage.setItem(STORAGE_KEYS.unassignedTasks, JSON.stringify(unassignedTasks.value))
         localStorage.setItem(STORAGE_KEYS.assignedTasks, JSON.stringify(assignedTasks.value))
       } catch (error) {
-        console.error('Error saving demo table data to localStorage:', error)
+        console.error('Error saving workflow2 table data to localStorage:', error)
       }
     }
   }
@@ -37,7 +37,7 @@ export const useDemoTableStore = defineStore('demoTable', () => {
           assignedTasks.value = JSON.parse(savedAssigned)
         }
       } catch (error) {
-        console.error('Error loading demo table data from localStorage:', error)
+        console.error('Error loading workflow2 table data from localStorage:', error)
         initializeDefaultTasks()
       }
     } else {
@@ -46,14 +46,55 @@ export const useDemoTableStore = defineStore('demoTable', () => {
   }
 
   const initializeDefaultTasks = () => {
-    unassignedTasks.value = []
+    unassignedTasks.value = [
+      {
+        id: 'workflow2-table-1',
+        task: 'Infrastructure Assessment',
+        status: 'Completed',
+        priority: 'High',
+        assignee: null,
+        originalOwner: 'Farahin'
+      },
+      {
+        id: 'workflow2-table-2',
+        task: 'Security Configuration',
+        status: 'In Progress',
+        priority: 'High',
+        assignee: null,
+        originalOwner: 'Farahin'
+      },
+      {
+        id: 'workflow2-table-3',
+        task: 'Performance Optimization',
+        status: 'Pending',
+        priority: 'Medium',
+        assignee: null,
+        originalOwner: 'Farahin'
+      },
+      {
+        id: 'workflow2-table-4',
+        task: 'Load Testing',
+        status: 'Scheduled',
+        priority: 'High',
+        assignee: null,
+        originalOwner: 'Farahin'
+      },
+      {
+        id: 'workflow2-table-5',
+        task: 'Documentation Update',
+        status: 'On Track',
+        priority: 'Low',
+        assignee: null,
+        originalOwner: 'Farahin'
+      }
+    ]
     saveToLocalStorage()
   }
 
   const addTask = (taskData: Omit<TaskData, 'id' | 'assignee'>) => {
     const newTask: TaskData = {
       ...taskData,
-      id: `demo-table-${Date.now()}`,
+      id: `workflow2-task-${Date.now()}`,
       assignee: null
     }
     unassignedTasks.value.push(newTask)

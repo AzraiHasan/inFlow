@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TaskData } from '~/stores/demoTable'
+import type { TaskData } from '~/types'
 
 interface Props {
   open: boolean
@@ -43,12 +43,8 @@ const isOpen = computed({
 })
 
 const availableAssignees = [
-  'Sarah Chen',
-  'Marcus Rodriguez',  
-  'Dr. Emily Watson',
-  'Alex Thompson',
-  'Jamie Liu',
-  'Chris Park'
+  'Ariffin',
+  'Farahin'
 ]
 
 const handleAssign = (assignee: string) => {

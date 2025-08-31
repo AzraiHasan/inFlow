@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TaskData } from '~/stores/demoTable'
+import type { TaskData } from '~/types'
 import type { TaskStatus } from './StatusSelect.vue'
 import type { TaskPriority } from './PrioritySelect.vue'
 

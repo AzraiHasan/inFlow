@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { h } from 'vue'
-import type { TaskData } from '~/stores/demoTable'
+import type { TaskData } from '~/types'
 import type { Document } from '~/types'
 
 interface Props {

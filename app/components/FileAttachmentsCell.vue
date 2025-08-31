@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TaskData } from '~/stores/demoTable'
+import type { TaskData } from '~/types'
 import type { Document } from '~/types'
 import { watch, nextTick } from 'vue'
 

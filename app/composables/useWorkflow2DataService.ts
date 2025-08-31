@@ -1,30 +1,30 @@
 import type { User, Task, Document, Comment} from '~/types';
 import { UserRole as _UserRole } from '~/types'
 
-// Global singleton state
-const globalUsers = ref<User[]>([])
-const globalTasks = ref<Task[]>([])
-const globalDocuments = ref<Document[]>([])
-const globalComments = ref<Comment[]>([])
-const globalCurrentPersona = ref<User | null>(null)
+// Global singleton state for workflow2
+const globalWorkflow2Users = ref<User[]>([])
+const globalWorkflow2Tasks = ref<Task[]>([])
+const globalWorkflow2Documents = ref<Document[]>([])
+const globalWorkflow2Comments = ref<Comment[]>([])
+const globalWorkflow2CurrentPersona = ref<User | null>(null)
 
-export const useDataService = () => {
+export const useWorkflow2DataService = () => {
   const { users: demoUsers, tasks: demoTasks, documents: demoDocuments, comments: demoComments } = useDemoData()
   
-  // Use global singleton state
-  const users = globalUsers
-  const tasks = globalTasks
-  const documents = globalDocuments
-  const comments = globalComments
-  const currentPersona = globalCurrentPersona
+  // Use global singleton state for workflow2
+  const users = globalWorkflow2Users
+  const tasks = globalWorkflow2Tasks
+  const documents = globalWorkflow2Documents
+  const comments = globalWorkflow2Comments
+  const currentPersona = globalWorkflow2CurrentPersona
   
-  // Local storage keys - match with workflow_1.vue reset function
+  // Local storage keys - separate from workflow1
   const STORAGE_KEYS = {
-    users: 'inflow-demo-users',
-    tasks: 'inflow-demo-tasks', 
-    documents: 'inflow-demo-documents',
-    comments: 'inflow-demo-comments',
-    currentPersona: 'inflow-active-persona'
+    users: 'inflow-workflow2-users',
+    tasks: 'inflow-workflow2-tasks', 
+    documents: 'inflow-workflow2-documents',
+    comments: 'inflow-workflow2-comments',
+    currentPersona: 'inflow-workflow2-persona'
   }
 
   // Initialize data from localStorage or use demo data
@@ -40,7 +40,7 @@ export const useDataService = () => {
         const savedPersona = JSON.parse(localStorage.getItem(STORAGE_KEYS.currentPersona) || 'null')
         currentPersona.value = savedPersona || users.value[0] || null // Default to first user
       } catch (error) {
-        console.warn('Error loading from localStorage, using demo data:', error)
+        console.warn('Error loading workflow2 data from localStorage, using demo data:', error)
         resetToDemo()
       }
     } else {
@@ -63,7 +63,7 @@ export const useDataService = () => {
         localStorage.setItem(STORAGE_KEYS.comments, JSON.stringify(comments.value))
         localStorage.setItem(STORAGE_KEYS.currentPersona, JSON.stringify(currentPersona.value))
       } catch (error) {
-        console.error('Error saving to localStorage:', error)
+        console.error('Error saving workflow2 data to localStorage:', error)
       }
     }
   }
@@ -107,7 +107,7 @@ export const useDataService = () => {
     const now = new Date().toISOString()
     const newTask: Task = {
       ...taskData,
-      id: `task-${Date.now()}`,
+      id: `workflow2-task-${Date.now()}`,
       createdAt: now,
       updatedAt: now,
       documents: [],
@@ -139,7 +139,7 @@ export const useDataService = () => {
     const now = new Date().toISOString()
     const newComment: Comment = {
       ...commentData,
-      id: `comment-${Date.now()}`,
+      id: `workflow2-comment-${Date.now()}`,
       createdAt: now,
       taskId
     }
@@ -162,7 +162,7 @@ export const useDataService = () => {
     const now = new Date().toISOString()
     const newDocument: Document = {
       ...documentData,
-      id: `doc-${Date.now()}`,
+      id: `workflow2-doc-${Date.now()}`,
       uploadedAt: now
     }
     
@@ -230,7 +230,7 @@ export const useDataService = () => {
   }, { deep: true })
 
   return {
-    // State - Remove readonly to fix reactivity
+    // State
     users,
     tasks,
     documents,

@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import type { TaskData } from '~/stores/demoTable'
+import type { TaskData } from '~/types'
 
 interface Props {
   open: boolean

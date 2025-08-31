@@ -111,3 +111,13 @@ export enum DocumentCategory {
   CONTRACT = 'contract',
   OTHER = 'other'
 }
+
+export interface TaskData {
+  id: string
+  task: string
+  status: 'Completed' | 'In Progress' | 'Pending' | 'Scheduled' | 'On Track'
+  priority: 'High' | 'Medium' | 'Low'
+  assignee: string | null
+  originalOwner: 'Ariffin' | 'Farahin'
+  note?: string
+}

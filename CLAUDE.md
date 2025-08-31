@@ -38,7 +38,7 @@ This is a TowerCo Workflow Platform demo that simulates document workflow manage
 - `app/` - Main application code (Nuxt 4 structure)
   - `components/` - Vue components (PersonaSelector, WorkspaceDashboard)
   - `composables/` - Reusable composition functions
-  - `pages/` - File-based routing (index.vue, demo.vue)
+  - `pages/` - File-based routing (index.vue, workflow_1.vue)
   - `stores/` - Pinia state management
   - `types/` - TypeScript type definitions
 - `docs/` - Project requirements and sprint documentation

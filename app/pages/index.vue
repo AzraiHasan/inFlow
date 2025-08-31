@@ -25,7 +25,7 @@
           </p>
           <div class="mt-10">
             <UButton 
-              to="/demo"
+              to="/workflow_1"
             >
               Try Demo
             </UButton>
