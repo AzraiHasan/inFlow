@@ -7,6 +7,11 @@
         <h1 class="text-3xl font-bold text-gray-900 mb-2">TowerCo Workflow Demo</h1>
         <p class="text-gray-600">Experience the platform from different persona perspectives</p>
       </div>
+
+      <!-- Workspace Dashboard - Persona Task Views -->
+      <div class="mb-8">
+        <WorkspaceDashboard />
+      </div>
       
       <div class="grid grid-cols-3 gap-6">
         <!-- First Column - Task Form -->
