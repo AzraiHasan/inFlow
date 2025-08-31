@@ -18,12 +18,17 @@
           />
         </div>
         
-        <!-- Second Column - UTable (2/3 width) -->
+        <!-- Second Column - Task Table (2/3 width) -->
         <div class="col-span-2">
           <div class="mb-2 text-xs text-gray-600">
             DEBUG: Tasks={{ demoTableStore.unassignedTasks.length }}, Docs={{ dataService.documents.value.length }}
           </div>
-          <UTable :data="demoTableStore.unassignedTasks" :columns="tableColumns as any" />
+          <TaskTable 
+            :tasks="demoTableStore.unassignedTasks"
+            @assign="openAssignModal"
+            @edit="openEditModal"
+            @preview="openPreview"
+          />
         </div>
       </div>
       
@@ -33,7 +38,12 @@
           <h3 class="text-xl font-semibold text-gray-900">Assigned Tasks</h3>
           <p class="text-gray-600">Tasks that have been assigned to team members</p>
         </div>
-        <UTable :data="demoTableStore.assignedTasks" :columns="assignedTaskColumns as any" />
+        <TaskTable 
+          :tasks="demoTableStore.assignedTasks"
+          :show-assignee-column="false"
+          @edit="openEditModal"
+          @preview="openPreview"
+        />
       </div>
     </div>
 
@@ -64,7 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import { h, resolveComponent } from 'vue'
 import type { TaskData } from '~/stores/demoTable'
 import { DocumentCategory, type Document } from '~/types'
 
@@ -125,178 +134,7 @@ onMounted(() => {
   console.log('FILE UPLOAD DEBUG: === END DEMO TABLE STORE DEBUG ===')
 })
 
-const tableColumns = [
-  {
-    key: 'category',
-    header: 'Category',
-    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
-      const task = row.original || row
-      return task.task.split(': ')[0] || ''
-    }
-  },
-  {
-    key: 'description',
-    header: 'Description', 
-    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
-      const task = row.original || row
-      return task.task.split(': ')[1] || task.task
-    }
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status'
-  },
-  {
-    accessorKey: 'priority',
-    header: 'Priority'
-  },
-  {
-    key: 'attachments',
-    header: 'Files',
-    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
-      const task = row.original || row
-      console.log('FILE UPLOAD DEBUG: ===============================================')
-      console.log('FILE UPLOAD DEBUG: Rendering files for TASK ROW:', {
-        taskId: task.id,
-        taskDescription: task.task,
-        taskStatus: task.status,
-        taskPriority: task.priority,
-        allDocuments: dataService.documents.value.length,
-        searchingFor: `demo-task-${task.id}`
-      })
-      console.log('FILE UPLOAD DEBUG: All available documents:', dataService.documents.value.map(d => ({
-        id: d.id,
-        name: d.name,
-        description: d.description,
-        matchesPattern: d.description?.includes(`demo-task-${task.id}`)
-      })))
-      
-      const documents = dataService.documents.value.filter(doc => {
-        const matches = doc.description?.includes(`demo-task-${task.id}`)
-        console.log('FILE UPLOAD DEBUG: Checking document:', {
-          docId: doc.id,
-          docName: doc.name,
-          description: doc.description,
-          searchPattern: `demo-task-${task.id}`,
-          matches: matches
-        })
-        return matches
-      })
-      
-      console.log('FILE UPLOAD DEBUG: Found', documents.length, 'documents for task', task.id)
-      if (documents.length > 0) {
-        console.log('FILE UPLOAD DEBUG: MATCHED Document details:', documents.map(d => ({ 
-          id: d.id, 
-          name: d.name, 
-          description: d.description 
-        })))
-      } else {
-        console.log('FILE UPLOAD DEBUG: NO MATCHES - Task pattern was:', `demo-task-${task.id}`)
-        console.log('FILE UPLOAD DEBUG: Available document patterns:', dataService.documents.value.map(d => d.description))
-        
-        // Check if any document contains the task ID without the prefix
-        const alternativeMatches = dataService.documents.value.filter(doc => 
-          doc.description?.includes(task.id)
-        )
-        if (alternativeMatches.length > 0) {
-          console.log('FILE UPLOAD DEBUG: ALTERNATIVE MATCHES (without demo-task prefix):', alternativeMatches.map(d => ({
-            id: d.id,
-            name: d.name, 
-            description: d.description
-          })))
-        }
-      }
-      
-      if (documents.length === 0) {
-        return h('span', { class: 'text-gray-400 text-sm' }, 'No files')
-      }
-      
-      console.log('FILE UPLOAD DEBUG: RENDERING', documents.length, 'documents for task', task.id)
-      console.log('FILE UPLOAD DEBUG: Documents being rendered:', documents.map(d => d.name))
-      console.log('FILE UPLOAD DEBUG: ===============================================')
-      
-      return h('div', { class: 'space-y-1' }, documents.map(doc => 
-        h('div', { class: 'flex items-center space-x-2' }, [
-          h(resolveComponent('UIcon'), { 
-            name: doc.type.includes('image') ? 'i-heroicons-photo' : 'i-heroicons-document-text',
-            class: 'w-4 h-4 text-gray-500'
-          }),
-          h('button', {
-            onClick: () => openPreview(doc as Document),
-            class: 'text-xs text-blue-600 hover:underline truncate max-w-[100px] cursor-pointer',
-            title: doc.name
-          }, doc.name)
-        ])
-      ))
-    }
-  },
-  {
-    key: 'assignee',
-    header: 'Assignee',
-    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
-      const task = row.original || row
-      if (!task.assignee) {
-        return h(resolveComponent('UButton'), {
-          variant: 'outline',
-          size: 'xs',
-          onClick: () => openAssignModal(task)
-        }, () => 'Assign')
-      }
-      return task.assignee
-    }
-  },
-  {
-    key: 'edit',
-    header: 'Edit',
-    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
-      const task = row.original || row
-      return h(resolveComponent('UButton'), {
-        variant: 'ghost',
-        size: 'xs',
-        onClick: () => openEditModal(task)
-      }, () => h(resolveComponent('UIcon'), {
-        name: 'i-heroicons-pencil',
-        class: 'w-4 h-4'
-      }))
-    }
-  }
-]
 
-const assignedTaskColumns = [
-  {
-    key: 'category',
-    header: 'Category',
-    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
-      const task = row.original || row
-      return task.task.split(': ')[0] || ''
-    }
-  },
-  {
-    key: 'description',
-    header: 'Description',
-    cell: ({ row }: { row: { original?: TaskData } & TaskData }) => {
-      const task = row.original || row
-      return task.task.split(': ')[1] || task.task
-    }
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status'
-  },
-  {
-    accessorKey: 'priority',
-    header: 'Priority'
-  },
-  {
-    accessorKey: 'assignee',
-    header: 'Assignee'
-  },
-  {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: () => 'draft'
-  }
-]
 
 const handleTaskSubmit = async (formData: { category: string | undefined; description: string; attachment: File | null; note: string }) => {
   console.log('=== FILE UPLOAD DEBUG: Task form submitted ===')
@@ -381,11 +219,14 @@ const handleTaskSubmit = async (formData: { category: string | undefined; descri
   console.log('=== FILE UPLOAD DEBUG: Process complete ===')
 }
 
-const openAssignModal = (task: TaskData) => {
-  console.log('Opening assign modal for task:', task)
-  selectedTaskForAssignment.value = task
-  isAssignModalOpen.value = true
-  console.log('Modal opened, selectedTaskForAssignment:', selectedTaskForAssignment.value)
+const openAssignModal = (taskId: string) => {
+  const task = [...demoTableStore.unassignedTasks, ...demoTableStore.assignedTasks].find(t => t.id === taskId)
+  if (task) {
+    console.log('Opening assign modal for task:', task)
+    selectedTaskForAssignment.value = task
+    isAssignModalOpen.value = true
+    console.log('Modal opened, selectedTaskForAssignment:', selectedTaskForAssignment.value)
+  }
 }
 
 const assignTask = (assigneeName: string, taskId: string) => {
@@ -398,9 +239,12 @@ const assignTask = (assigneeName: string, taskId: string) => {
   selectedTaskForAssignment.value = null
 }
 
-const openEditModal = (task: TaskData) => {
-  selectedTaskForEdit.value = task
-  isEditModalOpen.value = true
+const openEditModal = (taskId: string) => {
+  const task = [...demoTableStore.unassignedTasks, ...demoTableStore.assignedTasks].find(t => t.id === taskId)
+  if (task) {
+    selectedTaskForEdit.value = task
+    isEditModalOpen.value = true
+  }
 }
 
 const saveTaskEdit = (updatedTask: Partial<TaskData>) => {
