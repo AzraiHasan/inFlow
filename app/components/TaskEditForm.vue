@@ -210,8 +210,11 @@ const formState = reactive<TaskEditFormData>({
 const validationErrors = ref<ValidationErrors>({})
 const isSubmitting = ref(false)
 
-// Data service for managing documents
-const dataService = useDataService()
+// Data service for managing documents - use correct service based on route
+const route = useRoute()
+const isWorkflow2 = route.path.includes('workflow_2')
+const dataService = isWorkflow2 ? useWorkflow2DataService() : useDataService()
+console.log(`TaskEditForm DEBUG: Using ${isWorkflow2 ? 'useWorkflow2DataService()' : 'useDataService()'} for task editing`)
 
 // File change handler
 const handleFileChange = (file: File | null) => {
@@ -279,14 +282,14 @@ watch(() => props.task, (newTask) => {
     formState.note = newTask.note || ''
     
     // Load existing attachments for this task
-    const demoPattern = `Attachment for demo-task-${newTask.id}`
-    const workflow2Pattern = `Attachment for workflow2-task-${newTask.id}`
+    // Use the simplified pattern that matches the task ID directly
+    const searchPattern = `Attachment for ${newTask.id}`
     
     console.log('TaskEditForm DEBUG: Loading attachments for task', newTask.id)
-    console.log('TaskEditForm DEBUG: Searching patterns:', demoPattern, workflow2Pattern)
+    console.log('TaskEditForm DEBUG: Searching pattern:', searchPattern)
     
     const existingAttachments = dataService.documents.value.filter(doc => 
-      doc.description?.includes(demoPattern) || doc.description?.includes(workflow2Pattern)
+      doc.description?.includes(searchPattern)
     )
     
     console.log('TaskEditForm DEBUG: Found attachments:', existingAttachments.length)
@@ -350,11 +353,24 @@ const handleSubmit = async (event: Event) => {
           lastModified: file.lastModified
         })
         
-        // Determine the task prefix based on current task patterns
+        // Convert file to base64
+        const fileToBase64 = (file: File): Promise<string> => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as string)
+            reader.onerror = reject
+            reader.readAsDataURL(file)
+          })
+        }
+        
+        const base64Data = await fileToBase64(file)
+        console.log('TaskEditForm DEBUG: Base64 conversion complete, data length:', base64Data.length)
+        console.log('TaskEditForm DEBUG: Base64 preview (first 100 chars):', base64Data.substring(0, 100))
+        
+        // Determine the task prefix based on current task patterns or task ID
         const isWorkflow2 = formState.existingAttachments.some(doc => 
           doc.description?.includes('workflow2-task-')
-        )
-        const taskPrefix = isWorkflow2 ? 'workflow2-task' : 'demo-task'
+        ) || props.task.id.startsWith('workflow2-task-')
         
         // If we're uploading a new file, remove existing attachments first (replacement behavior)
         if (formState.existingAttachments.length > 0) {
@@ -365,21 +381,23 @@ const handleSubmit = async (event: Event) => {
         }
         
         // Create document data for the new attachment
+        // Use the task ID directly since it already includes the correct prefix
         const documentData = {
           name: file.name,
           type: file.type,
           size: file.size,
           category: DocumentCategory.SITE_SURVEY, // Default category, could be made configurable
-          description: `Attachment for ${taskPrefix}-${props.task.id}`,
+          description: `Attachment for ${props.task.id}`,
           uploadedBy: 'Current User', // This should ideally come from user context
           uploadedAt: new Date().toISOString(),
-          url: `mock-url-for-${file.name}` // In a real app, this would be the actual uploaded file URL
+          url: base64Data // Use base64 data URL for preview functionality
         }
         
         // Add document to data service (this will persist to localStorage)
-        const addedDoc = dataService.addDocument(`${taskPrefix}-${props.task.id}`, documentData)
+        const addedDoc = dataService.addDocument(props.task.id, documentData)
         console.log('TaskEditForm DEBUG: File attachment stored successfully with ID:', addedDoc.id)
         console.log('TaskEditForm DEBUG: Document description stored as:', addedDoc.description)
+        console.log('TaskEditForm DEBUG: Document URL stored as base64, length:', addedDoc.url?.length)
         
       } catch (error) {
         console.error('TaskEditForm DEBUG ERROR: Processing file attachment failed:', error)

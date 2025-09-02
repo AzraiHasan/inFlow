@@ -47,7 +47,13 @@ interface Emits {
 const { task } = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const dataService = useDataService()
+// DEBUG: Identify which workflow this is running in and use correct data service
+const route = useRoute()
+const isWorkflow2 = route.path.includes('workflow_2')
+console.log(`FileAttachmentsCell DEBUG: Running in ${isWorkflow2 ? 'WORKFLOW2 (Farahin)' : 'WORKFLOW1 (Ariffin)'} for task ${task.id}`)
+
+const dataService = isWorkflow2 ? useWorkflow2DataService() : useDataService()
+console.log(`FileAttachmentsCell DEBUG: Using ${isWorkflow2 ? 'useWorkflow2DataService()' : 'useDataService()'} for task ${task.id}`)
 
 // Force refresh mechanism - define before use
 const refreshKey = ref(0)
@@ -57,7 +63,7 @@ const documents = computed(() => {
   // Include refreshKey to force reactivity
   refreshKey.value
   
-  const searchPattern = `Attachment for demo-task-${task.id}`
+  const searchPattern = `Attachment for ${task.id}`
   const timestamp = new Date().toISOString()
   console.log(`FileAttachmentsCell DEBUG [${timestamp}]: COMPUTED RE-RUN for task ${task.id} (refresh: ${refreshKey.value})`)
   console.log('FileAttachmentsCell DEBUG: Search pattern:', searchPattern)

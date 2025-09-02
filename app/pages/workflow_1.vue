@@ -179,7 +179,7 @@ const handleTaskSubmit = async (formData: { category: string | undefined; descri
         type: file.type,
         size: file.size,
         taskId: createdTask.id,
-        expectedDocumentDescription: `Attachment for demo-task-${createdTask.id}`
+        expectedDocumentDescription: `Attachment for ${createdTask.id}`
       })
       
       // Convert file to base64
@@ -193,7 +193,7 @@ const handleTaskSubmit = async (formData: { category: string | undefined; descri
         type: file.type,
         size: file.size,
         category: DocumentCategory.OTHER,
-        description: `Attachment for demo-task-${createdTask.id}`,
+        description: `Attachment for ${createdTask.id}`,
         uploadedBy: dataService.currentPersona.value?.id || 'demo-user',
         version: 1,
         url: base64Data, // Store base64 data URL
@@ -208,7 +208,7 @@ const handleTaskSubmit = async (formData: { category: string | undefined; descri
       console.log('FILE UPLOAD DEBUG: Documents before adding:', dataService.documents.value.length)
       
       // Add document to data service (this will persist to localStorage)
-      const addedDoc = dataService.addDocument(`demo-task-${createdTask.id}`, documentData)
+      const addedDoc = dataService.addDocument(createdTask.id, documentData)
       console.log('FILE UPLOAD DEBUG: File attachment stored successfully with ID:', addedDoc.id)
       console.log('FILE UPLOAD DEBUG: Document description stored as:', addedDoc.description)
       console.log('FILE UPLOAD DEBUG: Current documents in store after adding:', dataService.documents.value.length)
@@ -267,6 +267,46 @@ const assignTask = (assigneeName: string, taskId: string) => {
         workflow2TableStore.unassignedTasks.push(taskCopy)
         workflow2TableStore.saveToLocalStorage()
         
+        // RETURN-TO-OWNER DOCUMENT SYNC: Copy current documents from Ariffin's workflow to Farahin's workflow
+        const sourceDataService = dataService  // workflow1 data service (Ariffin)
+        const targetDataService = useWorkflow2DataService()  // workflow2 data service (Farahin)
+        
+        console.log('Return-to-owner DEBUG: Syncing documents from Ariffin to Farahin for task:', task.id)
+        
+        // Remove any existing documents in target workflow (Farahin)
+        const existingTargetDocs = targetDataService.documents.value.filter(doc => 
+          doc.description?.includes(`Attachment for ${task.id}`)
+        )
+        console.log('Return-to-owner DEBUG: Removing existing documents in Farahin workflow:', existingTargetDocs.length)
+        
+        existingTargetDocs.forEach(doc => {
+          console.log('Return-to-owner DEBUG: Removing document:', doc.name)
+          targetDataService.deleteDocument(doc.id)
+        })
+        
+        // Copy current documents from source workflow (Ariffin)
+        const taskDocuments = sourceDataService.documents.value.filter(doc => 
+          doc.description?.includes(`Attachment for ${task.id}`)
+        )
+        
+        console.log('Return-to-owner DEBUG: Copying documents to Farahin workflow:', taskDocuments.length)
+        
+        taskDocuments.forEach(doc => {
+          console.log('Return-to-owner DEBUG: Copying document:', doc.name)
+          
+          targetDataService.addDocument(task.id, {
+            name: doc.name,
+            type: doc.type,
+            size: doc.size,
+            category: doc.category,
+            description: `Attachment for ${task.id}`,
+            uploadedBy: doc.uploadedBy || 'return-to-owner-copy',
+            version: doc.version || 1,
+            url: doc.url,
+            versions: doc.versions || []
+          })
+        })
+        
         console.log('Task returned to original owner Farahin, Ariffin tracks delegation:', task)
       } else {
         // Cross-assignment: Keep in Ariffin's Assigned AND add to Farahin's Unassigned
@@ -281,6 +321,65 @@ const assignTask = (assigneeName: string, taskId: string) => {
         workflow2TableStore.unassignedTasks.push(taskCopy)
         workflow2TableStore.saveToLocalStorage()
         
+        // CROSS-WORKFLOW DOCUMENT SHARING: Copy documents to target workflow
+        const sourceDataService = dataService  // workflow1 data service
+        const targetDataService = useWorkflow2DataService()  // workflow2 data service
+        
+        console.log('Cross-assignment DEBUG: Checking for documents to copy from workflow1 to workflow2')
+        console.log('Cross-assignment DEBUG: Source documents:', sourceDataService.documents.value.length)
+        console.log('Cross-assignment DEBUG: Target documents before copy:', targetDataService.documents.value.length)
+        
+        // STEP 1: Remove any existing documents for this task in target workflow (replacement behavior)
+        console.log('Cross-assignment DEBUG: Removing existing documents from target workflow for task:', task.id)
+        const existingTargetDocs = targetDataService.documents.value.filter(doc => 
+          doc.description?.includes(`Attachment for ${task.id}`)
+        )
+        console.log('Cross-assignment DEBUG: Found existing documents in target to remove:', existingTargetDocs.length)
+        
+        existingTargetDocs.forEach(doc => {
+          console.log('Cross-assignment DEBUG: Removing existing document:', doc.name, 'ID:', doc.id)
+          targetDataService.deleteDocument(doc.id)
+        })
+        
+        // STEP 2: Find current documents in source workflow to copy
+        const taskDocuments = sourceDataService.documents.value.filter(doc => 
+          doc.description?.includes(`Attachment for ${task.id}`)
+        )
+        
+        console.log('Cross-assignment DEBUG: Found task documents to copy:', taskDocuments.length)
+        
+        // STEP 3: Copy each document to the target workflow
+        taskDocuments.forEach(doc => {
+          console.log('Cross-assignment DEBUG: Copying document:', doc.name, 'with description:', doc.description)
+          console.log('Cross-assignment DEBUG: Source URL type:', doc.url?.startsWith('data:') ? 'base64' : 'other')
+          console.log('Cross-assignment DEBUG: Source URL preview:', doc.url?.substring(0, 100) + '...')
+          
+          // Create copy of document for target workflow
+          const docCopy = {
+            ...doc,
+            // Keep same description pattern for the task ID
+            description: `Attachment for ${task.id}`,
+            uploadedBy: doc.uploadedBy || 'cross-workflow-copy'
+          }
+          
+          // Add to target workflow's document store
+          const addedDoc = targetDataService.addDocument(task.id, {
+            name: docCopy.name,
+            type: docCopy.type,
+            size: docCopy.size,
+            category: docCopy.category,
+            description: docCopy.description,
+            uploadedBy: docCopy.uploadedBy,
+            version: docCopy.version || 1,
+            url: docCopy.url,
+            versions: docCopy.versions || []
+          })
+          
+          console.log('Cross-assignment DEBUG: Document copied to target workflow with ID:', addedDoc.id)
+          console.log('Cross-assignment DEBUG: Target URL type:', addedDoc.url?.startsWith('data:') ? 'base64' : 'other')
+        })
+        
+        console.log('Cross-assignment DEBUG: Target documents after copy:', targetDataService.documents.value.length)
         console.log('Task cross-assigned - appears in both workflows:', task)
       }
     } else {
@@ -322,7 +421,7 @@ const confirmDeleteTask = () => {
     
     if (deleted) {
       // Also remove associated documents from data service
-      dataService.deleteDocumentsByTaskId(`demo-task-${taskId}`)
+      dataService.deleteDocumentsByTaskId(taskId)
     }
     
     // Close modals and reset state

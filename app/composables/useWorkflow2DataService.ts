@@ -179,6 +179,25 @@ export const useWorkflow2DataService = () => {
     return newDocument
   }
 
+  // Delete document by ID
+  const deleteDocument = (documentId: string) => {
+    const initialLength = documents.value.length
+    documents.value = documents.value.filter(doc => doc.id !== documentId)
+    
+    // Also remove from any tasks that reference this document
+    tasks.value.forEach(task => {
+      if (task.documents) {
+        task.documents = task.documents.filter(doc => doc.id !== documentId)
+      }
+    })
+    
+    if (documents.value.length !== initialLength) {
+      saveToLocalStorage()
+      return true
+    }
+    return false
+  }
+
   // Delete documents by task ID hint
   const deleteDocumentsByTaskId = (taskIdHint: string) => {
     const initialLength = documents.value.length
@@ -252,6 +271,7 @@ export const useWorkflow2DataService = () => {
     updateTask,
     addComment,
     addDocument,
+    deleteDocument,
     deleteDocumentsByTaskId,
     clearAllDocuments,
     getAnalytics,
